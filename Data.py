@@ -8,7 +8,7 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', -1)
 pd.options.display.width = None
-basefolder = "C:\\Users\\Simon\\Desktop\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
+basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
 
 
 class Dataset:

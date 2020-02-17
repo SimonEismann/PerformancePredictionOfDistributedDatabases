@@ -1,5 +1,5 @@
 import numpy as np
-import Analysis2.Data as Data
+import Data as Data
 from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
 import boltons.statsutils as su
@@ -16,7 +16,7 @@ import seaborn as sns
 sns.set_palette(sns.color_palette("hls", 20))
 
 
-distplots = False
+distplots = True
 prediction = True
 
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
             plt.xlim(-0.5, 57.5)
             plt.legend(fontsize=20)
             plt.tight_layout()
-            plt.savefig("distributionplots/" + metric[0] + ".png")
+            plt.savefig("results/distributionplots/" + metric[0] + ".png")
             print("Finished file " + metric[0] + ".png")
 
     # Regression
@@ -133,6 +133,6 @@ if __name__ == "__main__":
                 plt.yticks(fontsize=24)
                 plt.xlim(1, len(y)-1)
                 plt.ylim(0, 30)
-                plt.savefig('predictionaccuracy_' + approach[0] + "_" + dataset[0] + '.png')
+                plt.savefig('results/predictionaccuracy/' + approach[0] + "_" + dataset[0] + '.png')
                 plt.close()
                 print(approach[0], dataset[0])
