@@ -7,5 +7,6 @@ Checkout the measurement data from git into the base folder of this project, the
     git clone https://omi-gitlab.e-technik.uni-ulm.de/ds/mowgli-ml-data.git
 
 ## Dependency Management ##
-This project uses pipenv to manage its dependencies. IN order to setup a development environment using pycharm follow these steps:
+To setup a development environment for this project using pycharm and pipenv, follow these steps:
 
+    TODO
