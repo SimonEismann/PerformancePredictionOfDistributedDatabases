@@ -11,5 +11,5 @@ To setup a development environment for this project using pycharm and pipenv, fo
     
 1. Create a new pycharm project in the folder `PerformancePredictionOfDistributedDatabases`.
 2. In the following dialog select a python 3.6 base interpreter and the pipenv executable:
-![alt text](https://github.com/SimonEismann/PerformancePredictionOfDistributedDatabases/blob/master/images/setup.png "")
+<img src="https://github.com/SimonEismann/PerformancePredictionOfDistributedDatabases/blob/master/images/setup.png" width="800">
 3. Select 'Yes' in the following dialog asking 'Would you like to create a project from existing sources instead'?
