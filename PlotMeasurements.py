@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 import boltons.statsutils as su
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
-from pyearth import Earth
+#from pyearth import Earth
 from sklearn.neural_network import MLPRegressor
 
 from sklearn import linear_model
@@ -43,7 +43,7 @@ if __name__ == "__main__":
                   ('Ridge', linear_model.Ridge()),
                   ('ElasticNet', linear_model.ElasticNet()),
                   ('BayesianRidge', linear_model.BayesianRidge()),
-                  ('MARS', Earth()),
+                  #('MARS', Earth()),
                   ('RandomForest', RandomForestRegressor(n_estimators=10, random_state=42)),
                   ('SVR', linear_model.SGDRegressor(max_iter=1000, tol=1e-3)),
                ]

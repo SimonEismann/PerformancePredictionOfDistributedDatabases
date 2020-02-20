@@ -12,7 +12,6 @@ sklearn = "*"
 matplotlib = "*"
 seaborn = "*"
 boltons = "*"
-sklearn-contrib-py-earth = "*"
 
 [requires]
 python_version = "3.8"
