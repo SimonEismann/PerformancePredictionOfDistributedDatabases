@@ -2,3 +2,4 @@ mowgli-ml-data
 .idea
 __pycache__
 Pipfile.lock
+/mowgli-ml-data/
