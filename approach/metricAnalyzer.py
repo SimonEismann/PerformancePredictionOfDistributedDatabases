@@ -24,8 +24,18 @@ def analyze_metrics(dataset, metriclist):
     return {"throughput": all_vars_tp, "latency": all_vars_lat}
 
 
+# Returns a dictionary with for each given measurement metric, a metric with the lowest average coefficient of variation
+# , together with the respective value is returned.
 def find_optimal_metric(dataset, metriclist):
     results = analyze_metrics(dataset, metriclist)
+    mins = {}
     for value in results:
-        print(value)
-        print(min(results[value]))
+        currmin = 2 # COV should be always smaller than 1
+        currmin_metric = "NO_METRIC_FOUND"
+        metrics = [i for i in results[value]]
+        for m in metrics:
+            if results[value][m][0] < currmin:
+                currmin = results[value][m][0]
+                currmin_metric = m
+        mins[value] = (currmin_metric, currmin)
+    return mins
