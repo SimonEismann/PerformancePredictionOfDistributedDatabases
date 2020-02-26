@@ -44,7 +44,8 @@ class Experiment:
             path = basefolder + "\\" + configuration
             folders = os.listdir(path)
             folders = [path + "\\" + fol for fol in folders]
-            self.measurement_values = []
+            self.throughput_values = []
+            self.latency_values = []
             for repPath in folders:
                 if not (repPath.__contains__("plots") | repPath.__contains__("archiv")):
                     if os.path.isfile(repPath + "\\data\\load.txt"):
@@ -57,17 +58,24 @@ class Experiment:
                             if len(metrics['throughputdata']) == 0:
                                 print("[WARN] Empty load.txt file: ", repPath)
                             else:
-                                self.measurement_values.append(metrics['throughputdata'])
+                                self.throughput_values.append(metrics['throughputdata'])
+                            if len(metrics['latencydata']) == 0:
+                                print("[WARN] Empty latency data: ", repPath)
+                            else:
+                                self.latency_values.append(metrics['latencydata'])
                     else:
                         print("[WARN] No load.txt file:", repPath)
         else:
             raise Exception('Invalid Experiment: ' + configuration)
 
     def calculate_robust_metric(self, calculate_robust_metric_function):
-        robust_metrics = []
-        for raw_measurements in self.measurement_values:
-            robust_metrics.append(calculate_robust_metric_function(raw_measurements))
-        return {**{'configuration': self.configuration}, **self.features, **{'target/throughput': robust_metrics}}
+        robust_metrics_tp = []
+        robust_metrics_lat = []
+        for raw_measurements in self.throughput_values:
+            robust_metrics_tp.append(calculate_robust_metric_function(raw_measurements))
+        for raw_measurements in self.latency_values:
+            robust_metrics_lat.append(calculate_robust_metric_function(raw_measurements))
+        return {**{'configuration': self.configuration}, **self.features, **{'target/throughput': robust_metrics_tp}, **{'target/latency': robust_metrics_lat}}
 
     def extract_features(self, folder_name):
         list_of_features = folder_name.split("_")
@@ -121,7 +129,7 @@ def load_data_set():
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one" and config != "vm-tiny_cs-9_rf-2_cc-two":
                 exp = Experiment(config)
                 # Remove me later
-                if len(exp.measurement_values) != 0:
+                if len(exp.throughput_values) != 0:
                     exps.append(exp)
     return Dataset(exps)
 
@@ -134,7 +142,7 @@ def load_small_vm_data_set():
                 exp = Experiment(config)
                 # Remove me later
                 if exp.features['feature/cores'] == 2:
-                    if len(exp.measurement_values) != 0:
+                    if len(exp.throughput_values) != 0:
                         exps.append(exp)
     return Dataset(exps)
 
@@ -147,7 +155,7 @@ def load_large_vm_data_set():
                 exp = Experiment(config)
                 # Remove me later
                 if exp.features['feature/cores'] == 6:
-                    if len(exp.measurement_values) != 0:
+                    if len(exp.throughput_values) != 0:
                         exps.append(exp)
     return Dataset(exps)
 
