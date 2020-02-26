@@ -3,14 +3,15 @@ from approach import metricanalyzer
 import Data
 from approach import util
 import boltons.statsutils as su
-
 import numpy as np
-import matplotlib
+import matplotlib.pyplot as plt
 from scipy import stats
 
 
 # Configurable base folder for the experiments
-my_basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
+my_basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
+
+res_folder = "results\\robust-metrics"
 
 def calculate_and_plot_robustness_metrics():
     # List of metrics to be analyzed
@@ -39,13 +40,19 @@ def calculate_and_plot_robustness_metrics():
     Data.basefolder = my_basefolder
     ds = Data.load_data_set()
     performance = metricanalyzer.analyze_metrics(ds, metrics)
-    for performance:
-    print(performance)
-    min = np.argmin(performance)
-    print(min)
+    for measurement in performance:
+        plot_robustness_barchart(measurement, res_folder, performance[measurement])
 
-def plot_robustness_barchart(name, metrics):
-
+def plot_robustness_barchart(name, folder, metrics):
+    avgs = [i[0] for i in list(metrics.values())]
+    stds = [i[1] for i in list(metrics.values())]
+    fig = plt.figure()
+    plt.bar(metrics.keys(), height=avgs, yerr=stds)
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.show()
+    plt.savefig(folder + "\\" + name + ".png")
+    plt.close()
 
 if __name__ == "__main__":
     calculate_and_plot_robustness_metrics()

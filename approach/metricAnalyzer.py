@@ -19,9 +19,9 @@ def analyze_metrics(dataset, metriclist):
             # calculate coefficient of variance of the specific experiment
             tps.append(stats.variation(row['target/throughput']))
             lats.append(stats.variation(row['target/latency']))
-        all_vars_tp[metric[0]] = (np.average(tps), np.var(tps))
-        all_vars_lat[metric[0]] = (np.average(lats), np.var(lats))
-    return {"throuhput": all_vars_tp, "latency": all_vars_lat}
+        all_vars_tp[metric[0]] = (np.average(tps), np.std(tps))
+        all_vars_lat[metric[0]] = (np.average(lats), np.std(lats))
+    return {"throughput": all_vars_tp, "latency": all_vars_lat}
 
 
 def find_optimal_metric(dataset, metriclist):
