@@ -2,6 +2,7 @@
 import numpy as np
 from scipy import stats
 
+
 # Analyzes the performance of the given metrics and applies all of them to the given data set.
 # Returns a dictionary, assigning every measurement metric (i.e., throughput or latency) a dictionary, assigning every
 # robust metric the average as well as the variance of all COVs (coefficient of variation) over all measurement points
