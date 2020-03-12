@@ -6,6 +6,9 @@ from scipy import stats
 import Data
 from approach import metricanalyzer
 from approach import util
+import approach.approach
+import approach.dataprovider as dp
+import itertools
 
 # Configurable base folder for the experiments
 my_basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
@@ -68,5 +71,17 @@ def plot_robustness_barchart(name, folder, metrics):
     plt.close()
 
 
+def evaluate_measurement_point_selection():
+    # create all feature instances
+    data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.applied_metric)
+    combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
+
+    # create approach instance
+    predictor = approach.approach.PerformancePredictior(my_basefolder)
+    for feats in combinations:
+        print(feats)
+
+
 if __name__ == "__main__":
-    calculate_and_plot_robustness_metrics()
+    #calculate_and_plot_robustness_metrics()
+    evaluate_measurement_point_selection()
