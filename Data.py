@@ -23,9 +23,6 @@ class Dataset:
             data_set.append(exp.calculate_robust_metric(calculate_robust_metric_function))
         df = pd.DataFrame(data_set)
         df = df.apply(pd.to_numeric, errors='ignore')
-        #df['feature/clustersize'] = df['feature/clustersize'].astype(int)
-        #df['feature/replicationfactor'] = df['feature/replicationfactor'].astype(int)
-        #df['target/throughput'] = df['target/throughput'].astype(int)
         return df
 
 
@@ -128,9 +125,20 @@ def load_data_set():
         if is_valid_exp(config):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one" and config != "vm-tiny_cs-9_rf-2_cc-two":
                 exp = Experiment(config)
-                # Remove me later
                 if len(exp.throughput_values) != 0:
                     exps.append(exp)
+    return Dataset(exps)
+
+
+def load_tiny_vm_data_set():
+    exps = []
+    for config in os.listdir(basefolder):
+        if is_valid_exp(config):
+            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
+                exp = Experiment(config)
+                if exp.features['feature/cores'] == 1:
+                    if len(exp.throughput_values) != 0:
+                        exps.append(exp)
     return Dataset(exps)
 
 
@@ -138,9 +146,8 @@ def load_small_vm_data_set():
     exps = []
     for config in os.listdir(basefolder):
         if is_valid_exp(config):
-            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one" and config != "vm-tiny_cs-9_rf-2_cc-two":
+            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config)
-                # Remove me later
                 if exp.features['feature/cores'] == 2:
                     if len(exp.throughput_values) != 0:
                         exps.append(exp)
@@ -151,10 +158,21 @@ def load_large_vm_data_set():
     exps = []
     for config in os.listdir(basefolder):
         if is_valid_exp(config):
-            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one" and config != "vm-tiny_cs-9_rf-2_cc-two":
+            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config)
-                # Remove me later
                 if exp.features['feature/cores'] == 6:
+                    if len(exp.throughput_values) != 0:
+                        exps.append(exp)
+    return Dataset(exps)
+
+
+def load_tiny_small_vm_data_set():
+    exps = []
+    for config in os.listdir(basefolder):
+        if is_valid_exp(config):
+            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
+                exp = Experiment(config)
+                if exp.features['feature/cores'] == 1 or exp.features['feature/cores'] == 2:
                     if len(exp.throughput_values) != 0:
                         exps.append(exp)
     return Dataset(exps)
