@@ -12,7 +12,7 @@ import sys
 from sklearn.metrics import mean_squared_error
 
 # Configurable base folder for the experiments
-my_basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
+my_basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
 
 res_folder = "results\\robust-metrics"
 

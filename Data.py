@@ -123,7 +123,7 @@ def load_data_set():
     exps = []
     for config in os.listdir(basefolder):
         if is_valid_exp(config):
-            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one" and config != "vm-tiny_cs-9_rf-2_cc-two":
+            if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config)
                 if len(exp.throughput_values) != 0:
                     exps.append(exp)
