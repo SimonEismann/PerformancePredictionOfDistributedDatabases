@@ -1,6 +1,7 @@
 import approach.dataprovider as dp
 import numpy as np
 from scipy import stats
+from sklearn.ensemble import IsolationForest
 
 
 # Our approach consists of three main steps.
@@ -16,7 +17,7 @@ class PerformancePredictior:
 
     confidence_quantifier = stats.variation
 
-    COV_THRESHOLD = 0.9999
+    COV_THRESHOLD = 0.02
 
     def __init__(self, datafolder):
         self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.applied_robust_metric)
@@ -41,7 +42,13 @@ class PerformancePredictior:
         return sum
 
     def filter_outliers(self, values):
-        return values
+        vals = np.asarray(values)
+        isolation_forest = IsolationForest(n_estimators=5)
+        scores = isolation_forest.fit_predict(vals.reshape(-1, 1))
+        mask = scores > 0
+        if not mask.all():
+            print("Filtered "+str(len(mask) - np.sum(mask))+" anomalies for values "+str(values) + ".")
+        return list(vals[mask])
 
     def quantify_measurement_point(self, values):
         # 1. perform outlier detection
