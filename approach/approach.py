@@ -10,7 +10,7 @@ from scipy import stats
 # 3. Model the whole search space with the available points using different ML algorithms
 class PerformancePredictior:
 
-    applied_robust_metric = lambda x: np.percentile(x, 0.95)
+    applied_robust_metric = lambda x: np.percentile(x, 95)
 
     measurement_point_aggregator = np.median
 

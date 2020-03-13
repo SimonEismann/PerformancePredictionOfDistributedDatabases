@@ -9,7 +9,7 @@ class DataProvider:
 
     # Constructor takes the base folder (basefolder) to use to detect all available metrics, and the metric to use
     # (robust_metric) to aggregate the individual measurement intervals for each experiment run. Default: Mean
-    def __init__(self, basefolder, robust_metric=np.mean):
+    def __init__(self, basefolder, robust_metric):
         Data.basefolder = basefolder
         self.ds = Data.load_data_set().calculate_robust_metric(robust_metric)
         self.derive_vm_sizes()

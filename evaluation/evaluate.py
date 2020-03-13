@@ -9,7 +9,7 @@ from approach import util
 import approach.approach
 import approach.dataprovider as dp
 import sys
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
 
 # Configurable base folder for the experiments
 my_basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
@@ -81,16 +81,24 @@ def evaluate_measurement_point_selection():
     predictor = approach.approach.PerformancePredictior(my_basefolder)
     gold = []
     estimated = []
+    max_diff = 0
     for feats in combinations:
         full_vector = data.get_exp("target/throughput", feats)
         gold_median = approach.approach.PerformancePredictior.measurement_point_aggregator(full_vector)
         gold.append(gold_median)
         est = predictor.get_one_measurement_point(feats)
         estimated.append(est)
-        print(str(feats) + ": " + str(gold_median)+ ", estimated: " + str(est)+".")
+        print(str(feats) + ": " + str(gold_median) + ", estimated: " + str(est)+".")
+        diff = abs(est - gold_median)
+        if diff > max_diff:
+            max_diff = diff
+            max_difffeat = feats
+    mse = mean_squared_error(gold, estimated)
     mape = mean_absolute_percentage_error(gold, estimated)
     no_ms = predictor.get_total_number_of_measurements()
     print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
+    print("Achieved a MSE of "+ str(mse)+ " using a total of "+str(no_ms)+" measurement points.")
+    print("The maximal deviation happened at "+str(feats)+" with a diference of "+str(max_diff)+". ")
 
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
