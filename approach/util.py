@@ -32,4 +32,22 @@ def get_cartesian_feature_product(feature_values):
             d[key] = c[i]
             i = i + 1
         dicts.append(d)
-    return dicts
+    return filter_combinations(dicts)
+
+
+# Filters impossible feature combinations based on DB domain knowledge.
+def filter_combinations(combinations):
+    final_combinations = []
+    for c in combinations:
+        if is_valid_combination(c):
+            final_combinations.append(c)
+    return final_combinations
+
+
+# Decides if a combination is valid based on domain knowledge from the area of databases.
+def is_valid_combination(combination):
+    if combination["clientconsistency"] > combination["replicationfactor"]:
+        # this is an unvalid configuration
+        return False
+    # if you make it until here, you are probably valid
+    return True

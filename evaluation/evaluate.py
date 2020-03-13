@@ -8,7 +8,8 @@ from approach import metricanalyzer
 from approach import util
 import approach.approach
 import approach.dataprovider as dp
-import itertools
+import sys
+from sklearn.metrics import mean_absolute_error
 
 # Configurable base folder for the experiments
 my_basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
@@ -73,13 +74,29 @@ def plot_robustness_barchart(name, folder, metrics):
 
 def evaluate_measurement_point_selection():
     # create all feature instances
-    data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.applied_metric)
+    data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.applied_robust_metric)
     combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
 
     # create approach instance
     predictor = approach.approach.PerformancePredictior(my_basefolder)
+    gold = []
+    estimated = []
     for feats in combinations:
-        print(feats)
+        full_vector = data.get_exp("target/throughput", feats)
+        gold_median = approach.approach.PerformancePredictior.measurement_point_aggregator(full_vector)
+        gold.append(gold_median)
+        est = predictor.get_one_measurement_point(feats)
+        estimated.append(est)
+        print(str(feats) + ": " + str(gold_median)+ ", estimated: " + str(est)+".")
+    mape = mean_absolute_percentage_error(gold, estimated)
+    no_ms = predictor.get_total_number_of_measurements()
+    print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
 
 
 if __name__ == "__main__":

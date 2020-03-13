@@ -10,10 +10,16 @@ from scipy import stats
 # 3. Model the whole search space with the available points using different ML algorithms
 class PerformancePredictior:
 
-    applied_metric = lambda x: np.percentile(x, 0.95)
+    applied_robust_metric = lambda x: np.percentile(x, 0.95)
+
+    measurement_point_aggregator = np.median
+
+    confidence_quantifier = stats.variation
+
+    COV_THRESHOLD = 0.9999
 
     def __init__(self, datafolder):
-        self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.applied_metric)
+        self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.applied_robust_metric)
         self.measurements = {}
 
     def get_entry(self, features):
@@ -24,25 +30,49 @@ class PerformancePredictior:
 
     def add_entry(self, features, value):
         if hash(frozenset(features.items())) in self.measurements:
-            raise ValueError("Can not add entry "+str(features)+" as it is already stored.")
+            raise ValueError("Can not add entry " + str(features) + " as it is already stored.")
         else:
             self.measurements[hash(frozenset(features.items()))] = value
 
+    def get_total_number_of_measurements(self):
+        sum = 0
+        for key in self.measurements:
+            sum += len(self.measurements[key])
+        return sum
+
+    def filter_outliers(self, values):
+        return values
+
+    def quantify_measurement_point(self, values):
+        # 1. perform outlier detection
+        core_values = self.filter_outliers(values)
+        # 2. then report median
+        val = PerformancePredictior.measurement_point_aggregator(core_values)
+        # 3. then report coefficient of variation
+        cov = PerformancePredictior.confidence_quantifier(core_values)
+        return val, cov
 
     def get_one_measurement_point(self, features):
+        if not self.get_entry(features):
+            # If not yet measured, obtain measurement
+            self.obtain_measurement(features)
+        val, cov = self.quantify_measurement_point(self.get_entry(features))
+        return val
+
+    def obtain_measurement(self, features):
         if self.get_entry(features):
-            raise ValueError("Measurement point with features "+str(features)+" is already stored.")
+            raise ValueError("Measurement point with features " + str(features) + " is already stored.")
         values = [self.dataprovider.get_measurement_point(index=0, metric="target/throughput", features=features),
                   self.dataprovider.get_measurement_point(index=1, metric="target/throughput", features=features)]
         i = 2
-        while not has_sufficient_accuracy(values):
+        while not self.accuracy_sufficient(values):
             values.append(
                 self.dataprovider.get_measurement_point(index=i, metric="target/throughput", features=features))
             i = i + 1
         self.add_entry(features, values)
 
-
-def has_sufficient_accuracy(values):
-    if stats.variation(values) > 0.1:
-        return False
-    return True
+    def accuracy_sufficient(self, values):
+        val, cov = self.quantify_measurement_point(values)
+        if cov > self.COV_THRESHOLD:
+            return False
+        return True
