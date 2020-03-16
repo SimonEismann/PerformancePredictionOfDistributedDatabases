@@ -73,32 +73,58 @@ def plot_robustness_barchart(name, folder, metrics):
 
 
 def evaluate_measurement_point_selection():
-    # create all feature instances
-    data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.applied_robust_metric)
-    combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
+    results = {"approach": [], "gold":[], "1-point":[], "2-point":[], "5-point":[], "10-point":[]}
+    points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "5-point": [], "10-point": []}
 
-    # create approach instance
-    predictor = approach.approach.PerformancePredictior(my_basefolder)
-    gold = []
-    estimated = []
-    max_diff = 0
-    for feats in combinations:
-        full_vector = data.get_exp("target/throughput", feats)
-        gold_median = approach.approach.PerformancePredictior.measurement_point_aggregator(full_vector)
-        gold.append(gold_median)
-        est = predictor.get_one_measurement_point(feats)
-        estimated.append(est)
-        print(str(feats) + ": " + str(gold_median) + ", estimated: " + str(est)+".")
-        diff = abs(est - gold_median)
-        if diff > max_diff:
-            max_diff = diff
-            max_difffeat = feats
-    mse = mean_squared_error(gold, estimated)
-    mape = mean_absolute_percentage_error(gold, estimated)
-    no_ms = predictor.get_total_number_of_measurements()
-    print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
-    print("Achieved a MSE of "+ str(mse)+ " using a total of "+str(no_ms)+" measurement points.")
-    print("The maximal deviation happened at "+str(feats)+" with a diference of "+str(max_diff)+". ")
+    for i in range(10):
+        # create all feature instances
+        data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.applied_robust_metric)
+        combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
+
+        # create approach instance
+        predictor = approach.approach.PerformancePredictior(my_basefolder)
+        max_diff = 0
+        baselines = {"gold":[], "approach":[], "1-point": [], "2-point": [], "5-point": [], "10-point": []}
+        for feats in combinations:
+            full_vector = data.get_exp("target/throughput", feats)
+            gold_median = approach.approach.PerformancePredictior.measurement_point_aggregator(full_vector)
+            baselines["gold"].append(gold_median)
+            compare_baseline_methods(baselines, full_vector)
+            est = predictor.get_one_measurement_point(feats)
+            baselines["approach"].append(est)
+            #print(str(feats) + ": " + str(gold_median) + ", estimated: " + str(est)+".")
+            diff = abs(est - gold_median)
+            if diff > max_diff:
+                max_diff = diff
+                max_difffeat = feats
+        mse = mean_squared_error(baselines["gold"], baselines["approach"])
+        mape = mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
+        no_ms = predictor.get_total_number_of_measurements()
+        print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
+        print("Achieved a MSE of "+ str(mse)+ " using a total of "+str(no_ms)+" measurement points.")
+        print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
+        for key in results:
+            #mse = mean_squared_error(baselines["gold"], baselines[key])
+            mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
+            results[key].append(mape)
+        points["approach"].append(no_ms)
+        points["gold"].append(len(full_vector)*len(combinations))
+        points["1-point"].append(len(combinations))
+        points["2-point"].append(len(combinations)*2)
+        points["5-point"].append(len(combinations)*5)
+        points["10-point"].append(len(combinations)*10)
+    print("------------------------------------")
+    print("Final Results.")
+    for key in results:
+        print(str(key)+": Avg. Error: "+str(np.mean(results[key]))+" using an average of "+str(np.mean(points[key])) + " measurement points.")
+
+
+def compare_baseline_methods(results, values):
+    results["1-point"].append(values[0])
+    results["2-point"].append(np.median(values[0:2]))
+    results["5-point"].append(np.median(values[0:6]))
+    results["10-point"].append(np.median(values[0:11]))
+
 
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)

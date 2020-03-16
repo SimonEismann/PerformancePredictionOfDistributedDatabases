@@ -17,7 +17,7 @@ class PerformancePredictior:
 
     confidence_quantifier = stats.variation
 
-    COV_THRESHOLD = 0.02
+    COV_THRESHOLD = 0.05
 
     def __init__(self, datafolder):
         self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.applied_robust_metric)
@@ -46,8 +46,8 @@ class PerformancePredictior:
         isolation_forest = IsolationForest(n_estimators=5)
         scores = isolation_forest.fit_predict(vals.reshape(-1, 1))
         mask = scores > 0
-        if not mask.all():
-            print("Filtered "+str(len(mask) - np.sum(mask))+" anomalies for values "+str(values) + ".")
+        #if not mask.all():
+        #    print("Filtered "+str(len(mask) - np.sum(mask))+" anomalies for values "+str(values) + ".")
         return list(vals[mask])
 
     def quantify_measurement_point(self, values):

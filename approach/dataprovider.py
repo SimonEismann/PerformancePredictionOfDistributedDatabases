@@ -1,5 +1,6 @@
 import Data
 import numpy as np
+import random
 
 
 # Class responsible of holding and delivering individual measurements upon request
@@ -13,6 +14,15 @@ class DataProvider:
         Data.basefolder = basefolder
         self.ds = Data.load_data_set().calculate_robust_metric(robust_metric)
         self.derive_vm_sizes()
+        # shuffle data points
+        for index, row in self.ds.iterrows():
+            ltps = list(self.ds.loc[index, "target/throughput"])
+            random.shuffle(ltps)
+            self.ds.at[index, "target/throughput"] = ltps
+            llat = list(self.ds.loc[index, "target/latency"])
+            random.shuffle(llat)
+            self.ds.at[index, "target/latency"] = llat
+
 
     # Returns the i-th (index-th) measurement point of the given features.
     def get_measurement_point(self, index, metric, features):
