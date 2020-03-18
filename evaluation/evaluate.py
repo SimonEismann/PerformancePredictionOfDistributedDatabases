@@ -73,8 +73,8 @@ def plot_robustness_barchart(name, folder, metrics):
 
 
 def evaluate_measurement_point_selection():
-    results = {"approach": [], "gold":[], "1-point":[], "2-point":[], "5-point":[], "10-point":[]}
-    points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "5-point": [], "10-point": []}
+    results = {"approach": [], "gold":[], "1-point":[], "2-point":[], "3-point":[], "5-point":[], "10-point":[]}
+    points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
 
     for i in range(10):
         # create all feature instances
@@ -84,7 +84,7 @@ def evaluate_measurement_point_selection():
         # create approach instance
         predictor = approach.approach.PerformancePredictior(my_basefolder)
         max_diff = 0
-        baselines = {"gold":[], "approach":[], "1-point": [], "2-point": [], "5-point": [], "10-point": []}
+        baselines = {"gold":[], "approach":[], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
         for feats in combinations:
             full_vector = data.get_exp("target/throughput", feats)
             gold_median = approach.approach.PerformancePredictior.measurement_point_aggregator(full_vector)
@@ -111,6 +111,7 @@ def evaluate_measurement_point_selection():
         points["gold"].append(len(full_vector)*len(combinations))
         points["1-point"].append(len(combinations))
         points["2-point"].append(len(combinations)*2)
+        points["3-point"].append(len(combinations)*3)
         points["5-point"].append(len(combinations)*5)
         points["10-point"].append(len(combinations)*10)
     print("------------------------------------")
@@ -122,6 +123,7 @@ def evaluate_measurement_point_selection():
 def compare_baseline_methods(results, values):
     results["1-point"].append(values[0])
     results["2-point"].append(np.median(values[0:2]))
+    results["3-point"].append(np.median(values[0:3]))
     results["5-point"].append(np.median(values[0:6]))
     results["10-point"].append(np.median(values[0:11]))
 
