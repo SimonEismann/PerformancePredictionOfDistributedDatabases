@@ -43,7 +43,7 @@ class PerformancePredictior:
 
     def filter_outliers(self, values):
         vals = np.asarray(values)
-        isolation_forest = IsolationForest(n_estimators=5)
+        isolation_forest = IsolationForest(n_estimators=1)
         scores = isolation_forest.fit_predict(vals.reshape(-1, 1))
         mask = scores > 0
         #if not mask.all():

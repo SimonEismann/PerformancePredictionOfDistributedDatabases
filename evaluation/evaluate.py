@@ -104,16 +104,16 @@ def evaluate_measurement_point_selection():
         print("Achieved a MSE of "+ str(mse)+ " using a total of "+str(no_ms)+" measurement points.")
         print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
         for key in results:
-            #mse = mean_squared_error(baselines["gold"], baselines[key])
-            mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
-            results[key].append(mape)
-        points["approach"].append(no_ms)
-        points["gold"].append(len(full_vector)*len(combinations))
-        points["1-point"].append(len(combinations))
-        points["2-point"].append(len(combinations)*2)
-        points["3-point"].append(len(combinations)*3)
-        points["5-point"].append(len(combinations)*5)
-        points["10-point"].append(len(combinations)*10)
+            mse = mean_squared_error(baselines["gold"], baselines[key])
+            #mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
+            results[key].append(mse)
+        points["approach"].append(no_ms/len(combinations))
+        points["gold"].append(len(full_vector))
+        points["1-point"].append(1)
+        points["2-point"].append(2)
+        points["3-point"].append(3)
+        points["5-point"].append(5)
+        points["10-point"].append(10)
     print("------------------------------------")
     print("Final Results.")
     for key in results:
@@ -131,8 +131,6 @@ def compare_baseline_methods(results, values):
 def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-
 
 
 if __name__ == "__main__":
