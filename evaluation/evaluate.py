@@ -9,6 +9,7 @@ from approach import util
 import approach.approach
 import approach.dataprovider as dp
 import sys
+from pylatexenc.latexencode import unicode_to_latex
 from sklearn.metrics import mean_squared_error
 
 # Configurable base folder for the experiments
@@ -46,6 +47,15 @@ def calculate_and_plot_robustness_metrics():
     performance = metricanalyzer.analyze_metrics(ds, metrics)
     for measurement in performance:
         plot_robustness_barchart(measurement, res_folder, performance[measurement])
+        # print out performance tables
+        print("LATEX: "+measurement+":")
+        print("------------------------")
+        print("Metric& \tAvg& \tStd\\\\\\hline")
+        for key, value in performance[measurement].items():
+            print(unicode_to_latex(str(key))+ " & \t{0:.3f} & \t{1:.3f} \\\\".format(value[0], value[1]))
+        print("------------------------")
+
+
     optimal_metrics = metricanalyzer.find_optimal_metric(ds, metrics)
     for metric in optimal_metrics:
         print("For metric " + metric + ", the best metric was " + str(
@@ -134,5 +144,5 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 if __name__ == "__main__":
-    #calculate_and_plot_robustness_metrics()
-    evaluate_measurement_point_selection()
+    calculate_and_plot_robustness_metrics()
+    #evaluate_measurement_point_selection()

@@ -12,6 +12,7 @@ sklearn = "*"
 matplotlib = "*"
 seaborn = "*"
 boltons = "*"
+pylatexenc = "*"
 
 [requires]
 python_version = "3.8"
