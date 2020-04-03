@@ -83,7 +83,8 @@ def plot_robustness_barchart(name, folder, metrics):
 
 
 def evaluate_measurement_point_selection():
-    results = {"approach": [], "gold":[], "1-point":[], "2-point":[], "3-point":[], "5-point":[], "10-point":[]}
+    resultsmape = {"approach": [], "gold":[], "1-point":[], "2-point":[], "3-point":[], "5-point":[], "10-point":[]}
+    resultsmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
     points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
 
     for i in range(10):
@@ -113,10 +114,11 @@ def evaluate_measurement_point_selection():
         print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
         print("Achieved a MSE of "+ str(mse)+ " using a total of "+str(no_ms)+" measurement points.")
         print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
-        for key in results:
+        for key in resultsmape:
             mse = mean_squared_error(baselines["gold"], baselines[key])
-            #mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
-            results[key].append(mse)
+            mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
+            resultsmse[key].append(mse)
+            resultsmape[key].append(mape)
         points["approach"].append(no_ms/len(combinations))
         points["gold"].append(len(full_vector))
         points["1-point"].append(1)
@@ -126,8 +128,10 @@ def evaluate_measurement_point_selection():
         points["10-point"].append(10)
     print("------------------------------------")
     print("Final Results.")
-    for key in results:
-        print(str(key)+": Avg. Error: "+str(np.mean(results[key]))+" using an average of "+str(np.mean(points[key])) + " measurement points.")
+    for key in resultsmape:
+        print(str(key)+": Avg. MAPE: "+str(np.mean(resultsmape[key]))+"% using an average of "+str(np.mean(points[key])) + " measurement points.")
+        print(str(key) + ": Avg. MSE: " + str(np.mean(resultsmse[key])) + " using an average of " + str(
+            np.mean(points[key])) + " measurement points.")
 
 
 def compare_baseline_methods(results, values):
@@ -151,5 +155,5 @@ def evaluate_total_workflow():
 
 if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
-    evaluate_measurement_point_selection()
-    #evaluate_total_workflow()
+    #evaluate_measurement_point_selection()
+    evaluate_total_workflow()

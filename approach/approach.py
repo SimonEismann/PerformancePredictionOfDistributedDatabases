@@ -5,12 +5,12 @@
 # 3. Model the whole search space with the available points using different ML algorithms
 import numpy as np
 from scipy import stats
-from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 import approach.dataprovider as dp
 import approach.util as util
 from approach.units.measurementunit import MeasurementSet
-from approach.units.modelproviderunit import PerformanceModelProvider as mp
+from approach.units.modelproviderunit import PerformanceModelProvider
 
 
 # This is the main class of the performance prediction step. This class starts the workflow, stores all required constants and coordinates the individual units.
@@ -45,18 +45,18 @@ class PerformancePredictior:
     # Main entry point of the performance prediction workflow. Executes the measurment-modelling loop until a sufficient accuracy is achieved. Then returns the final model.
     def start_workflow(self):
         print("Started model workflow.")
-        modelprovider = mp.PerformanceModelProvider(model_type=MLPRegressor(max_iter=1000000))
+        modelprovider = PerformanceModelProvider(model_type=RandomForestRegressor())
         print("Conducting initial set of measurements.")
         self.get_initial_measurements()
         model, accuracy = modelprovider.create_model(self.measurements)
-        print("Initial internal model accuracy using " + (str(len(self.measurements))) + " measurements: " + str(
+        print("Initial internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
             accuracy))
         while accuracy < PerformancePredictior.ACC_THRESHOLD:
             self.add_one_measurement()
             model, accuracy = modelprovider.create_model(self.measurements)
-            print("Improved internal model accuracy using " + (str(len(self.measurements))) + " measurements: " + str(
+            print("Improved internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
                 accuracy))
-        print("Final internal model accuracy using " + (str(len(self.measurements))) + " measurements: " + str(
+        print("Final internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
             accuracy) + ". Returning model.")
         return model
 
@@ -69,7 +69,7 @@ class PerformancePredictior:
                 len(self.feature_space), PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
         for i in range(0, points):
             features = self.get_next_measurement_features(i)
-            self.get_one_measurement_point(features)
+            self.measurements.get_one_measurement_point(features)
 
     # Decides on the next feature combination that it measured in order to improve the model. The parameter "index" is a counter specifying how many measurements have been conducted already.
     def get_next_measurement_features(self, index):

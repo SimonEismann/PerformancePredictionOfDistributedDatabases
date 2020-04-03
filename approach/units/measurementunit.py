@@ -29,6 +29,10 @@ class MeasurementSet:
         self.dataprovider = dataprovider
         self.metric = target_metric
 
+    # Returns the set of feature combinations that were added to the measurement set and are available up to this point.
+    def get_available_feature_set(self):
+        return self.measured_features
+
     # Returns the total number of raw measurement repetitions that were requested from the dataprovider for statistics.
     def get_total_number_of_measurements(self):
         sum = 0
@@ -38,7 +42,7 @@ class MeasurementSet:
 
     # Returns the aggregated value (i.e., the target value) of one feature combination.
     def get_one_measurement_point(self, features):
-        if hash(frozenset(features.items())) not in self.permanent_value_store:
+        if features not in self.measured_features:
             # If not yet measured, obtain measurement
             self.__obtain_measurement(features)
         return self.permanent_value_store[hash(frozenset(features.items()))]
@@ -62,6 +66,7 @@ class MeasurementSet:
             self.raw_measurements[hash(frozenset(features.items()))] = value
             val, cov = self.__quantify_measurement_point(value)
             self.permanent_value_store[hash(frozenset(features.items()))] = val
+            self.measured_features.append(features)
 
     # Returns True, if the values have a satisfactory confidence values, False if more repetitions are required.
     def __accuracy_sufficient(self, values):

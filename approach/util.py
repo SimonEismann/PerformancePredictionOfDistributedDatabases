@@ -2,6 +2,8 @@
 import numpy as np
 import itertools
 
+# Map assigning VM sizes with core and memory allocations
+vmsize_map = {"tiny": [1, 2], "small": [2, 4], "medium": [4, 8], "large-memory": [4, 12], "large-cpu": [6, 8]}
 
 # Calculated the Hodges-Lehmann metric for a given input vector.
 def calculate_hodges_lehmann(l_input):
@@ -51,3 +53,21 @@ def is_valid_combination(combination):
         return False
     # if you make it until here, you are probably valid
     return True
+
+
+# Returns the vmsize based on the core and memory counts as defined in the vmsize_map.
+def get_vm_size(cores, memory):
+    sizes = [cores, memory]
+    for size in vmsize_map:
+        if vmsize_map[size] == sizes:
+            vmsize=size
+    if not vmsize:
+        raise ValueError("The VM size associated with sizes of "+str(sizes)+" could not be mapped...")
+    return vmsize
+
+
+# Returns the number of memory and cores based on the vmsize string as defined in the vmsize_map.
+def get_core_and_memory(vmsize):
+    if vmsize not in vmsize_map:
+        raise ValueError("The VM size associated with the name " + str(vmsize) + " could not be mapped...")
+    return vmsize_map[vmsize]

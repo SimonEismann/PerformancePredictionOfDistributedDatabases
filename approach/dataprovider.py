@@ -1,12 +1,11 @@
+# This file contains implementations and interfaces of data providers
 import Data
-import numpy as np
 import random
+from approach import util
 
 
 # Class responsible of holding and delivering individual measurements upon request
 class DataProvider:
-
-    vmsize_map = {"tiny": [1, 2], "small": [2, 4], "medium": [4, 8], "large-memory": [4, 12], "large-cpu": [6, 8]}
 
     # Constructor takes the base folder (basefolder) to use to detect all available metrics, and the metric to use
     # (robust_metric) to aggregate the individual measurement intervals for each experiment run. Default: Mean
@@ -57,17 +56,7 @@ class DataProvider:
                 feature_values[key].add(row["feature/"+key])
         return feature_values
 
-    # Returns the vmsize based on the core and memory counts as defined in the global vmsize_map.
-    def get_vm_size(self, row):
-        sizes = [row["feature/cores"], row["feature/memory"]]
-        for size in self.vmsize_map:
-            if self.vmsize_map[size] == sizes:
-                vmsize=size
-        if not vmsize:
-            raise ValueError("The VM size associated with sizes of "+str(sizes)+" could not be mapped...")
-        return vmsize
-
     # Adds vmsize enum column to the dataframe as defined in the global vmsize_map based on core and memory counts.
     def derive_vm_sizes(self):
         for index, row in self.ds.iterrows():
-            self.ds.loc[index, 'feature/vmsize'] = self.get_vm_size(row)
+            self.ds.loc[index, 'feature/vmsize'] = util.get_vm_size(row["feature/cores"], row["feature/memory"])
