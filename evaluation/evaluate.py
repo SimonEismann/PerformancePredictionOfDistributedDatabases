@@ -143,6 +143,13 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
+def evaluate_total_workflow():
+    # create approach instance
+    predictor = approach.approach.PerformancePredictior(my_basefolder)
+    predictor.start_workflow()
+
+
 if __name__ == "__main__":
-    calculate_and_plot_robustness_metrics()
+    #calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
+    evaluate_total_workflow()

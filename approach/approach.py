@@ -1,7 +1,11 @@
-import approach.dataprovider as dp
 import numpy as np
 from scipy import stats
 from sklearn.ensemble import IsolationForest
+from sklearn.neural_network import MLPRegressor
+
+import approach.ModelProvider as mp
+import approach.dataprovider as dp
+import approach.util as util
 
 
 # Our approach consists of three main steps.
@@ -10,7 +14,6 @@ from sklearn.ensemble import IsolationForest
 # 2. Dynamically select the next point of the measurement space, required to be sampled in order to increase the accuracy of the model
 # 3. Model the whole search space with the available points using different ML algorithms
 class PerformancePredictior:
-
     applied_robust_metric = lambda x: np.percentile(x, 95)
 
     measurement_point_aggregator = np.median
@@ -19,9 +22,21 @@ class PerformancePredictior:
 
     COV_THRESHOLD = 0.05
 
+    ACC_THRESHOLD = 0.80
+
+    INITIAL_MEASUREMENT_RATIO = 0.1
+
     def __init__(self, datafolder):
+        # the provider of the measurement data
         self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.applied_robust_metric)
+        # storing actual measurement data
         self.measurements = {}
+        # already measured features
+        self.measured_features = []
+        # calculate possible feature space
+        self.feature_space = util.get_cartesian_feature_product(self.dataprovider.get_all_possible_values())
+        # get random walk permutation (order in which to traverse the points)
+        self.permutation = np.random.permutation(len(self.feature_space))
 
     def get_entry(self, features):
         if hash(frozenset(features.items())) in self.measurements:
@@ -41,12 +56,42 @@ class PerformancePredictior:
             sum += len(self.measurements[key])
         return sum
 
+    def start_workflow(self):
+        print("Started model workflow.")
+        modelprovider = mp.PerformanceModelProvider(model_type=MLPRegressor(max_iter=1000000))
+        print("Conducting initial set of measurements.")
+        self.get_initial_measurements()
+        model, accuracy = modelprovider.create_model(self.measurements)
+        print("Initial internal model accuracy using " + (str(len(self.measurements))) + " measurements: " + str(
+            accuracy))
+        while accuracy < PerformancePredictior.ACC_THRESHOLD:
+            self.add_one_measurement()
+            model, accuracy = modelprovider.create_model(self.measurements)
+            print("Improved internal model accuracy using " + (str(len(self.measurements))) + " measurements: " + str(
+                accuracy))
+        print("Final internal model accuracy using " + (str(len(self.measurements))) + " measurements: " + str(
+            accuracy) + ". Returning model.")
+        return model, accuracy
+
+    def get_initial_measurements(self):
+        # Determine number of points to be measured based on the size of the feature set
+        points = int(len(self.feature_space) * PerformancePredictior.INITIAL_MEASUREMENT_RATIO)
+        print(
+            "We have a total number of {0} features in the space and apply a ratio of {1}, resulting in a total of {2} initial measurements.".format(
+                len(self.feature_space), PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
+        for i in range(0, points):
+            features = self.get_next_measurement_features(i)
+            self.get_one_measurement_point(features)
+
+    def get_next_measurement_features(self, index):
+        return self.feature_space[self.permutation[index]]
+
     def filter_outliers(self, values):
         vals = np.asarray(values)
         isolation_forest = IsolationForest(n_estimators=1)
         scores = isolation_forest.fit_predict(vals.reshape(-1, 1))
         mask = scores > 0
-        #if not mask.all():
+        # if not mask.all():
         #    print("Filtered "+str(len(mask) - np.sum(mask))+" anomalies for values "+str(values) + ".")
         return list(vals[mask])
 
