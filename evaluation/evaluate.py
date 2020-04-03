@@ -88,16 +88,16 @@ def evaluate_measurement_point_selection():
 
     for i in range(10):
         # create all feature instances
-        data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.applied_robust_metric)
+        data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.ROBUST_METRIC)
         combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
 
         # create approach instance
-        predictor = approach.approach.PerformancePredictior(my_basefolder)
+        predictor = approach.approach.PerformancePredictior(my_basefolder).measurements
         max_diff = 0
         baselines = {"gold":[], "approach":[], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
         for feats in combinations:
             full_vector = data.get_exp("target/throughput", feats)
-            gold_median = approach.approach.PerformancePredictior.measurement_point_aggregator(full_vector)
+            gold_median = approach.approach.PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR(full_vector)
             baselines["gold"].append(gold_median)
             compare_baseline_methods(baselines, full_vector)
             est = predictor.get_one_measurement_point(feats)
@@ -151,5 +151,5 @@ def evaluate_total_workflow():
 
 if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
-    #evaluate_measurement_point_selection()
-    evaluate_total_workflow()
+    evaluate_measurement_point_selection()
+    #evaluate_total_workflow()
