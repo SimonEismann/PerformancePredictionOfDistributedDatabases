@@ -54,7 +54,25 @@ def calculate_and_plot_robustness_metrics():
         for key, value in performance[measurement].items():
             print(unicode_to_latex(str(key))+ " & \t{0:.3f} & \t{1:.3f} \\\\".format(value[0], value[1]))
         print("------------------------")
+    print("LATEX: COMBINED")
+    print("------------------------")
+    tmp = "Metric\t&"
+    any = None
+    for measurement in performance:
+        tmp = tmp + ("{0}: Avg,\t&{0}: Std,\t&").format(measurement)
+        any = measurement
+    tmp = tmp[:-1] + "\\\\\\hline"
+    print(tmp)
+    for key, value in performance[any].items():
+        # for each metric
+        tmp = unicode_to_latex(str(key))
+        for measurement in performance:
+             tmp = tmp + ("\t&{0:.3f}\t& {1:.3f}").format(performance[measurement][key][0], performance[measurement][key][1])
+        print(tmp+ "\\\\")
 
+
+
+    print("------------------------")
 
     optimal_metrics = metricanalyzer.find_optimal_metric(ds, metrics)
     for metric in optimal_metrics:
@@ -134,6 +152,8 @@ def evaluate_measurement_point_selection():
             np.mean(points[key])) + " measurement points.")
 
 
+
+
 def compare_baseline_methods(results, values):
     results["1-point"].append(values[0])
     results["2-point"].append(np.median(values[0:2]))
@@ -154,6 +174,6 @@ def evaluate_total_workflow():
 
 
 if __name__ == "__main__":
-    #calculate_and_plot_robustness_metrics()
+    calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
-    evaluate_total_workflow()
+    #evaluate_total_workflow()

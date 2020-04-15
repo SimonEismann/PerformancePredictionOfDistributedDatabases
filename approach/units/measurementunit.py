@@ -88,7 +88,7 @@ class MeasurementSet:
     # This function takes a set of values as input, filters all outliers, and return the same set of values without the respective outliers.
     def __filter_outliers(self, values):
         vals = np.asarray(values)
-        isolation_forest = IsolationForest(n_estimators=1)
+        isolation_forest = IsolationForest(n_estimators=2)
         scores = isolation_forest.fit_predict(vals.reshape(-1, 1))
         mask = scores > 0
         # if not mask.all():
