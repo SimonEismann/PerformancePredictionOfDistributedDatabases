@@ -128,8 +128,6 @@ def evaluate_measurement_point_selection():
             if diff > max_diff:
                 max_diff = diff
                 max_difffeat = feats
-        print(baselines["gold"])
-        print(baselines["approach"])
         rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines["approach"]))
         mape = mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
         no_ms = predictor.get_total_number_of_measurements()

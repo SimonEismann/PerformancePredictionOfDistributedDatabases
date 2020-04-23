@@ -22,7 +22,7 @@ class PerformancePredictior:
     # Metric to quantify the variation of the aggregation function, i.e., the confidence in its stability
     CONFIDENCE_QUANTIFIER = stats.variation
     # Threshold quantifying which values of the CONFIDENCE_QUANTIFIER are deemed acceptable
-    COV_THRESHOLD = 0.025
+    COV_THRESHOLD = 0.02
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     ACC_THRESHOLD = 0.80
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
