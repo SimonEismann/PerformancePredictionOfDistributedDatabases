@@ -1,4 +1,6 @@
 # Main script for evaluation purposes
+import math
+
 import boltons.statsutils as su
 import matplotlib.pyplot as plt
 import numpy as np
@@ -102,10 +104,10 @@ def plot_robustness_barchart(name, folder, metrics):
 
 def evaluate_measurement_point_selection():
     resultsmape = {"approach": [], "gold":[], "1-point":[], "2-point":[], "3-point":[], "5-point":[], "10-point":[]}
-    resultsmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
+    resultsrmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
     points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
 
-    for i in range(10):
+    for i in range(100):
         # create all feature instances
         data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.ROBUST_METRIC)
         combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
@@ -126,16 +128,18 @@ def evaluate_measurement_point_selection():
             if diff > max_diff:
                 max_diff = diff
                 max_difffeat = feats
-        mse = mean_squared_error(baselines["gold"], baselines["approach"])
+        print(baselines["gold"])
+        print(baselines["approach"])
+        rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines["approach"]))
         mape = mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
         no_ms = predictor.get_total_number_of_measurements()
         print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
-        print("Achieved a MSE of "+ str(mse)+ " using a total of "+str(no_ms)+" measurement points.")
+        print("Achieved a RMSE of "+ str(rmse)+ " using a total of "+str(no_ms)+" measurement points.")
         print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
         for key in resultsmape:
             mse = mean_squared_error(baselines["gold"], baselines[key])
             mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
-            resultsmse[key].append(mse)
+            resultsrmse[key].append(mse)
             resultsmape[key].append(mape)
         points["approach"].append(no_ms/len(combinations))
         points["gold"].append(len(full_vector))
@@ -148,11 +152,13 @@ def evaluate_measurement_point_selection():
     print("Final Results.")
     for key in resultsmape:
         print(str(key)+": Avg. MAPE: "+str(np.mean(resultsmape[key]))+"% using an average of "+str(np.mean(points[key])) + " measurement points.")
-        print(str(key) + ": Avg. MSE: " + str(np.mean(resultsmse[key])) + " using an average of " + str(
+        print(str(key) + ": Avg. RMSE: " + str(np.mean(resultsrmse[key])) + " using an average of " + str(
             np.mean(points[key])) + " measurement points.")
-
-
-
+    print("------------------------------------")
+    print("LATEX TABLE.")
+    print("Approach \t& MAPE \t& RMSE \t& # points\\\\")
+    for key in resultsmape:
+        print(("{0} \t& {1:.2f} \t& {2:.1f} \t& {3:.2f}\\\\").format(unicode_to_latex(str(key)), np.mean(resultsmape[key]), np.mean(resultsrmse[key]), np.mean(points[key])))
 
 def compare_baseline_methods(results, values):
     results["1-point"].append(values[0])
@@ -174,6 +180,6 @@ def evaluate_total_workflow():
 
 
 if __name__ == "__main__":
-    calculate_and_plot_robustness_metrics()
-    #evaluate_measurement_point_selection()
+    #calculate_and_plot_robustness_metrics()
+    evaluate_measurement_point_selection()
     #evaluate_total_workflow()

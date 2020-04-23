@@ -11,9 +11,10 @@ class MeasurementSet:
     # dataprovider: References to a DataProvider instance used for obtaining the raw measurements
     # target_metric: String of the target metric that is searched for. Forwarded directly to the dataprovider.
     # threshold: The threshold until a value of confidence_function is deemed to be sufficiently confident.
+    # max_measurement: The maximum amount of measurements to be conducted.
     # aggregation_function: The function used for aggregating a set of measurement repetitions
     # confidence_function: The function used to evaluate the confidence into a given set of measurement repetitions.
-    def __init__(self, dataprovider, target_metric, threshold, aggregation_function, confidence_function):
+    def __init__(self, dataprovider, target_metric, threshold, max_measurments, aggregation_function, confidence_function):
         # storing actual measurement data
         self.raw_measurements = {}
         # storing aggreagted measurement data. This storage is required as the aggregation step (incl. outlier filtering) might work non-determenistic.
@@ -26,6 +27,7 @@ class MeasurementSet:
         self.measurement_point_aggregator = aggregation_function
         self.confidence_quantifier = confidence_function
         self.cov_threshold = threshold
+        self.n_max = max_measurments
         self.dataprovider = dataprovider
         self.metric = target_metric
 
@@ -52,7 +54,7 @@ class MeasurementSet:
         values = [self.dataprovider.get_measurement_point(index=0, metric=self.metric, features=features),
                   self.dataprovider.get_measurement_point(index=1, metric=self.metric, features=features)]
         i = 2
-        while not self.__accuracy_sufficient(values):
+        while not (self.__accuracy_sufficient(values) or len(values) >= self.n_max):
             values.append(
                 self.dataprovider.get_measurement_point(index=i, metric=self.metric, features=features))
             i = i + 1
@@ -79,8 +81,12 @@ class MeasurementSet:
     def __quantify_measurement_point(self, values):
         # 1. perform outlier detection
         core_values = self.__filter_outliers(values)
+        if len(core_values) == 0:
+            # if all get removed -> use original set
+            core_values = values
         # 2. then report median
         val = self.measurement_point_aggregator(core_values)
+        val2 = np.median(core_values)
         # 3. then report coefficient of variation
         cov = self.confidence_quantifier(core_values)
         return val, cov

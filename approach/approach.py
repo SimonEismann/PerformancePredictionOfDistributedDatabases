@@ -22,9 +22,11 @@ class PerformancePredictior:
     # Metric to quantify the variation of the aggregation function, i.e., the confidence in its stability
     CONFIDENCE_QUANTIFIER = stats.variation
     # Threshold quantifying which values of the CONFIDENCE_QUANTIFIER are deemed acceptable
-    COV_THRESHOLD = 0.05
+    COV_THRESHOLD = 0.025
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     ACC_THRESHOLD = 0.80
+    # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
+    MAX_MEASUREMENTS = 10
     # Ratio of measurement points (in relation to the total number of points) that are taken
     INITIAL_MEASUREMENT_RATIO = 0.1
 
@@ -34,7 +36,7 @@ class PerformancePredictior:
         self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.ROBUST_METRIC)
         # storing  measurement data
         self.measurements = MeasurementSet(dataprovider=self.dataprovider, target_metric="target/throughput",
-                                           threshold=PerformancePredictior.COV_THRESHOLD,
+                                           threshold=PerformancePredictior.COV_THRESHOLD, max_measurments=PerformancePredictior.MAX_MEASUREMENTS,
                                            aggregation_function=PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR,
                                            confidence_function=PerformancePredictior.CONFIDENCE_QUANTIFIER)
         # calculate possible feature space
