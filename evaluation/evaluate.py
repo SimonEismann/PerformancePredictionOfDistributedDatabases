@@ -135,7 +135,7 @@ def evaluate_measurement_point_selection():
         print("Achieved a RMSE of "+ str(rmse)+ " using a total of "+str(no_ms)+" measurement points.")
         print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
         for key in resultsmape:
-            mse = mean_squared_error(baselines["gold"], baselines[key])
+            mse = math.sqrt(mean_squared_error(baselines["gold"], baselines[key]))
             mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
             resultsrmse[key].append(mse)
             resultsmape[key].append(mape)
