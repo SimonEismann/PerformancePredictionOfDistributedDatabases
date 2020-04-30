@@ -8,9 +8,9 @@ from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
 
 import approach.dataprovider as dp
-import approach.util as util
 from approach.units.measurementunit import MeasurementSet
 from approach.units.modelproviderunit import PerformanceModelProvider
+from approach.units.samplingunit import ConfigurationPointProvider
 
 
 # This is the main class of the performance prediction step. This class starts the workflow, stores all required constants and coordinates the individual units.
@@ -24,7 +24,7 @@ class PerformancePredictior:
     # Threshold quantifying which values of the CONFIDENCE_QUANTIFIER are deemed acceptable
     COV_THRESHOLD = 0.02
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
-    ACC_THRESHOLD = 0.80
+    ACC_THRESHOLD = 0.6
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     MAX_MEASUREMENTS = 10
     # Ratio of measurement points (in relation to the total number of points) that are taken
@@ -39,10 +39,7 @@ class PerformancePredictior:
                                            threshold=PerformancePredictior.COV_THRESHOLD, max_measurments=PerformancePredictior.MAX_MEASUREMENTS,
                                            aggregation_function=PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR,
                                            confidence_function=PerformancePredictior.CONFIDENCE_QUANTIFIER)
-        # calculate possible feature space
-        self.feature_space = util.get_cartesian_feature_product(self.dataprovider.get_all_possible_values())
-        # get random walk permutation (order in which to traverse the points)
-        self.permutation = np.random.permutation(len(self.feature_space))
+        self.configuration_provider= ConfigurationPointProvider(self.dataprovider.get_all_possible_values())
 
     # Main entry point of the performance prediction workflow. Executes the measurment-modelling loop until a sufficient accuracy is achieved. Then returns the final model.
     def start_workflow(self):
@@ -54,7 +51,8 @@ class PerformancePredictior:
         print("Initial internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
             accuracy))
         while accuracy < PerformancePredictior.ACC_THRESHOLD:
-            self.add_one_measurement()
+            curr_points = len(self.measurements.get_available_feature_set())
+            self.add_one_measurement(curr_points)
             model, accuracy = modelprovider.create_model(self.measurements)
             print("Improved internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
                 accuracy))
@@ -65,14 +63,16 @@ class PerformancePredictior:
     # Defines and collects the set of initial measurements to conduct
     def get_initial_measurements(self):
         # Determine number of points to be measured based on the size of the feature set
-        points = int(len(self.feature_space) * PerformancePredictior.INITIAL_MEASUREMENT_RATIO)
+        feat_len = len(self.configuration_provider.feature_space)
+        points = int(feat_len * PerformancePredictior.INITIAL_MEASUREMENT_RATIO)
         print(
             "We have a total number of {0} features in the space and apply a ratio of {1}, resulting in a total of {2} initial measurements.".format(
-                len(self.feature_space), PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
+                feat_len, PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
         for i in range(0, points):
-            features = self.get_next_measurement_features(i)
-            self.measurements.get_one_measurement_point(features)
+            self.add_one_measurement(i)
 
-    # Decides on the next feature combination that it measured in order to improve the model. The parameter "index" is a counter specifying how many measurements have been conducted already.
-    def get_next_measurement_features(self, index):
-        return self.feature_space[self.permutation[index]]
+    # Selects a new configuration point and adds it to the measurement set.
+    # Index is the number of already measured points.
+    def add_one_measurement(self, index):
+        feats = self.configuration_provider.get_next_measurement_features(index)
+        self.measurements.get_one_measurement_point(feats)

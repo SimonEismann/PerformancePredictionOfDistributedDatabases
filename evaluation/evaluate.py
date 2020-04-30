@@ -179,5 +179,5 @@ def evaluate_total_workflow():
 
 if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
-    evaluate_measurement_point_selection()
-    #evaluate_total_workflow()
+    #evaluate_measurement_point_selection()
+    evaluate_total_workflow()

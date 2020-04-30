@@ -1,5 +1,6 @@
 # This file contains all functionality related to the machine learning and modeling procedure.
 from approach import util
+from sklearn.model_selection import cross_val_score
 
 
 # This class takes care of training and evaluating performance models of a specified type.
@@ -64,6 +65,6 @@ class PerformanceModel:
         return self.score
 
     def __train_model(self, model_to_use):
-        model =  model_to_use.fit(self.features, self.labels)
-        score = 1
-        return model, score
+        score = cross_val_score(model_to_use, self.features, self.labels, cv=3).mean()
+        full_model =  model_to_use.fit(self.features, self.labels)
+        return full_model, score
