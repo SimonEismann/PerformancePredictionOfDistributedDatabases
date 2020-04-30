@@ -23,7 +23,7 @@ my_basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\
 
 res_folder = "results"
 res_robust_folder = res_folder + "\\robust-metrics"
-res_efficiency_folder = res_folder + "\\efficiency"
+res_efficiency_folder = res_folder + "\\efficiencies"
 
 
 def calculate_and_plot_robustness_metrics():
@@ -212,6 +212,7 @@ def get_approach_efficiency(model_type, repetitions=50):
     approach.approach.PerformancePredictior.MODEL_TYPE = model_type
     accs = []
     meas = []
+    confs = []
     times = []
     for i in range(0,repetitions):
         predictor = approach.approach.PerformancePredictior(my_basefolder)
@@ -221,25 +222,52 @@ def get_approach_efficiency(model_type, repetitions=50):
         times.append((end - start))
         accs.append(get_model_accuracy(predictor))
         meas.append(predictor.measurements.get_total_number_of_measurements())
-    return np.mean(accs), np.mean(meas), np.mean(times)
+        confs.append(len(predictor.measurements.get_available_feature_set()))
+    return np.mean(accs), np.mean(meas), np.mean(confs), np.mean(times)
 
 
 def evaluate_efficiency_scatter_plot():
+    repetitions = 5
     approaches = [('LinReg', linear_model.LinearRegression()),
                   ('Ridge', linear_model.Ridge()),
                   ('ElasticNet', linear_model.ElasticNet()),
                   ('BayesianRidge', linear_model.BayesianRidge()),
                   ('HuberRegressor', linear_model.HuberRegressor()),
-                  ('MLP', MLPRegressor(max_iter=1000000)),
+                  #('MLP', MLPRegressor(max_iter=10000)),
                   ('GBDT', GradientBoostingRegressor()),
                   ('RandomForest', RandomForestRegressor()),
                   ('SVR', linear_model.SGDRegressor()),
                   ]
     # for each model in approaches
-    with open(res_efficiency_folder+"\\efficiencies.csv") as file:
-
+    names = []
+    accs = []
+    meass = []
+    confs = []
+    times = []
+    with open(res_efficiency_folder+"\\efficiencies.csv", "w+") as file:
+        file.write("Approach, Avg. MAPE, Avg. Measurements, Avg. Configurations, Avg. Time (s)\n")
         for model in approaches:
-            print("Approach {0}: {1}".format(model[0], get_approach_efficiency(model[1], 5)))
+            # actural execution
+            acc, meas, conf, time = get_approach_efficiency(model[1], repetitions=repetitions)
+            # file export
+            file.write("{0}, {1}, {2}, {3}, {4}\n".format(model[0], acc, meas, conf, time))
+            file.flush()
+
+            print("Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0])), acc, meas, conf, time))
+
+            # storing for figure
+            names.append(model[0])
+            accs.append(acc)
+            meass.append(meas)
+            confs.append(conf)
+            times.append(time)
+
+    print("-------------------")
+    print("LATEX")
+    print("Approach \t& Avg. MAPE \t& Avg. Measurements (Max. 900) \t& Avg. Configrations (Max. 90) \t& Avg. Time (s)\\\\")
+    for i in range(0, len(names)):
+        # latex export
+        print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i], meass[i], confs[i], times[i]))
 
     pass
 
