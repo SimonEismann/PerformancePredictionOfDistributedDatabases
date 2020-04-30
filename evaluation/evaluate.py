@@ -5,12 +5,16 @@ import boltons.statsutils as su
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
+from sklearn import linear_model
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.neural_network import MLPRegressor
+
 import Data
 from approach import metricanalyzer
 from approach import util
 import approach.approach
 import approach.dataprovider as dp
-import sys
+import time
 from pylatexenc.latexencode import unicode_to_latex
 from sklearn.metrics import mean_squared_error
 
@@ -102,6 +106,12 @@ def plot_robustness_barchart(name, folder, metrics):
     plt.close()
 
 
+def get_real_prediction_value(dataprovider, features, target="target/throughput"):
+    full_vector = dataprovider.get_exp(target, features)
+    gold_median = approach.approach.PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR(full_vector)
+    return gold_median, full_vector
+
+
 def evaluate_measurement_point_selection():
     resultsmape = {"approach": [], "gold":[], "1-point":[], "2-point":[], "3-point":[], "5-point":[], "10-point":[]}
     resultsrmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
@@ -117,8 +127,7 @@ def evaluate_measurement_point_selection():
         max_diff = 0
         baselines = {"gold":[], "approach":[], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
         for feats in combinations:
-            full_vector = data.get_exp("target/throughput", feats)
-            gold_median = approach.approach.PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR(full_vector)
+            gold_median, full_vector = get_real_prediction_value(dataprovider=data, features=feats)
             baselines["gold"].append(gold_median)
             compare_baseline_methods(baselines, full_vector)
             est = predictor.get_one_measurement_point(feats)
@@ -135,9 +144,9 @@ def evaluate_measurement_point_selection():
         print("Achieved a RMSE of "+ str(rmse)+ " using a total of "+str(no_ms)+" measurement points.")
         print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
         for key in resultsmape:
-            mse = math.sqrt(mean_squared_error(baselines["gold"], baselines[key]))
+            rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines[key]))
             mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
-            resultsrmse[key].append(mse)
+            resultsrmse[key].append(rmse)
             resultsmape[key].append(mape)
         points["approach"].append(no_ms/len(combinations))
         points["gold"].append(len(full_vector))
@@ -174,10 +183,65 @@ def mean_absolute_percentage_error(y_true, y_pred):
 def evaluate_total_workflow():
     # create approach instance
     predictor = approach.approach.PerformancePredictior(my_basefolder)
-    predictor.start_workflow()
+    predictor.start_training_workflow()
+    print("Accuracy: {0}.".format(get_model_accuracy(predictor)))
+
+
+def get_model_accuracy(predictor):
+    preds = []
+    reals = []
+    feature_set = predictor.configuration_provider.get_feature_space()
+    measured_set = predictor.measurements.get_available_feature_set()
+    for validation in feature_set:
+        if validation in measured_set:
+            # do nothing
+            pass
+        else:
+            preds.append(predictor.get_prediction(validation))
+            gold, full_vector = get_real_prediction_value(predictor.dataprovider, validation)
+            reals.append(gold)
+    rmse = math.sqrt(mean_squared_error(reals, preds))
+    mape = mean_absolute_percentage_error(reals, preds)
+    return mape
+
+
+def get_approach_efficiency(model_type, repetitions=50):
+    # Careful! This breaks multi-thread compatability!
+    approach.approach.PerformancePredictior.MODEL_TYPE = model_type
+    accs = []
+    meas = []
+    times = []
+    for i in range(0,repetitions):
+        predictor = approach.approach.PerformancePredictior(my_basefolder)
+        start = time.time()
+        predictor.start_training_workflow()
+        end = time.time()
+        times.append(end-start)
+        accs.append(get_model_accuracy(predictor))
+        meas.append(predictor.measurements.get_total_number_of_measurements())
+    return np.mean(accs), np.mean(meas), np.mean(times)
+
+
+def evaluate_efficiency_scatter_plot():
+    approaches = [('LinReg', linear_model.LinearRegression()),
+                  ('Ridge', linear_model.Ridge()),
+                  ('ElasticNet', linear_model.ElasticNet()),
+                  ('BayesianRidge', linear_model.BayesianRidge()),
+                  ('HuberRegressor', linear_model.HuberRegressor()),
+                  ('MLP', MLPRegressor(max_iter=1000000)),
+                  ('GBDT', GradientBoostingRegressor()),
+                  ('RandomForest', RandomForestRegressor()),
+                  ('SVR', linear_model.SGDRegressor()),
+                  ]
+    # for each model in approaches
+    for model in approaches:
+        print("Approach {0}: {1}".format(model[0], get_approach_efficiency(model[1], 5)))
+
+    pass
 
 
 if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
-    evaluate_total_workflow()
+    #evaluate_total_workflow()
+    evaluate_efficiency_scatter_plot()

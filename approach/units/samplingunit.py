@@ -13,6 +13,11 @@ class ConfigurationPointProvider:
         # get random walk permutation (order in which to traverse the points)
         self.permutation = np.random.permutation(len(self.feature_space))
 
+    # Returns the cartesian products of all available features, as used by this configuration provider.
+    # The value is stored and just computed once.
+    def get_feature_space(self):
+        return self.feature_space
+
     # Decides on the next feature combination that it measured in order to improve the model.
     # The parameter "index" is a counter specifying how many measurements have been conducted already.
     def get_next_measurement_features(self, index):

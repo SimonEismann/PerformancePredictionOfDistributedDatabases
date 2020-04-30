@@ -1,5 +1,6 @@
 # This file contains all functionality related to the machine learning and modeling procedure.
 from approach import util
+import numpy as np
 from sklearn.model_selection import cross_val_score
 
 
@@ -14,14 +15,14 @@ class PerformanceModelProvider:
     # Create a performance model using all data available in the given measurements.
     # Returns the built model and an internal accuracy estimate.
     def create_model(self, measurements):
-        print(measurements)
         labels = []
-        features = []
         measurement_set = measurements.get_available_feature_set()
+        features = []
         for feat in measurement_set:
             labels.append(measurements.get_one_measurement_point(feat))
             features.append(self.get_feature_vector(feat))
-        instance = PerformanceModel(model_to_use=self.model, training_features=features, training_labels=labels)
+            np_features = np.concatenate(features)
+        instance = PerformanceModel(model_to_use=self.model, training_features=np_features, training_labels=labels)
         return instance.get_trained_model(), instance.get_internal_accuracy_score()
 
     # Transforms the feature values given by a dict into an ordered feature vector.
@@ -43,7 +44,7 @@ class PerformanceModelProvider:
                 vector.append(mem)
             else:
                 vector.append(val)
-        return vector
+        return np.asarray(vector).reshape(1, -1)
 
 
 
@@ -66,5 +67,5 @@ class PerformanceModel:
 
     def __train_model(self, model_to_use):
         score = cross_val_score(model_to_use, self.features, self.labels, cv=3).mean()
-        full_model =  model_to_use.fit(self.features, self.labels)
+        full_model = model_to_use.fit(self.features, self.labels)
         return full_model, score
