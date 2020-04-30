@@ -3,3 +3,7 @@ mowgli-ml-data
 __pycache__
 Pipfile.lock
 /mowgli-ml-data/
+/results/distributionplots/
+/results/predictionaccuracy/
+/results/timeseries/
+/results/efficiencies/

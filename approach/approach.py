@@ -40,7 +40,8 @@ class PerformancePredictior:
         self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.ROBUST_METRIC)
         # storing  measurement data
         self.measurements = MeasurementSet(dataprovider=self.dataprovider, target_metric="target/throughput",
-                                           threshold=PerformancePredictior.COV_THRESHOLD, max_measurments=PerformancePredictior.MAX_MEASUREMENTS,
+                                           threshold=PerformancePredictior.COV_THRESHOLD,
+                                           max_measurments=PerformancePredictior.MAX_MEASUREMENTS,
                                            aggregation_function=PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR,
                                            confidence_function=PerformancePredictior.CONFIDENCE_QUANTIFIER)
         self.modelprovider = PerformanceModelProvider(model_type=PerformancePredictior.MODEL_TYPE)
@@ -48,23 +49,28 @@ class PerformancePredictior:
 
     # Main entry point of the performance prediction workflow. Executes the measurment-modelling loop until a sufficient accuracy is achieved. Then returns the final model.
     def start_training_workflow(self):
-        #print("Started model workflow.")
-        #print("Conducting initial set of measurements.")
+        # print("Started model workflow.")
+        # print("Conducting initial set of measurements.")
         self.__get_initial_measurements()
         model, accuracy = self.modelprovider.create_model(self.measurements)
         # print("Initial internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
         #     accuracy))
         while accuracy < PerformancePredictior.ACC_THRESHOLD:
             curr_points = len(self.measurements.get_available_feature_set())
-            if (curr_points >= len(self.measurements.get_available_feature_set()) * PerformancePredictior.UPPER_BOUND_MEASUREMENT_RATIO):
+            if (curr_points >= len(
+                    self.configuration_provider.get_feature_space()) * PerformancePredictior.UPPER_BOUND_MEASUREMENT_RATIO):
                 # We already took too many points
-                print("Breaking iterative model improvement as too many measurement points have been demanded.")
+                print(
+                    "Breaking iterative model improvement as too many measurement points have been demanded (Measured: {0}, total points: {1}, applied max ratio: {2}.".format(
+                        curr_points, len(self.configuration_provider.get_feature_space()),
+                        PerformancePredictior.UPPER_BOUND_MEASUREMENT_RATIO))
                 break
             self.__add_one_measurement(curr_points)
             model, accuracy = self.modelprovider.create_model(self.measurements)
             # print("Improved internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
             #     accuracy))
-        print("Final internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
+        print("Final internal model accuracy using " + (
+            str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
             accuracy) + ". Returning model.")
         self.model = model
         return self
@@ -86,9 +92,9 @@ class PerformancePredictior:
         # Determine number of points to be measured based on the size of the feature set
         feat_len = len(self.configuration_provider.feature_space)
         points = int(feat_len * PerformancePredictior.INITIAL_MEASUREMENT_RATIO)
-        print(
-            "We have a total number of {0} configuration points in the space and apply a ratio of {1}, resulting in a total of {2} initial measurements.".format(
-                feat_len, PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
+        # print(
+        #   "We have a total number of {0} configuration points in the space and apply a ratio of {1}, resulting in a total of {2} initial measurements.".format(
+        #        feat_len, PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
         for i in range(0, points):
             self.__add_one_measurement(i)
 

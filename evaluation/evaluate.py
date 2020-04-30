@@ -21,7 +21,9 @@ from sklearn.metrics import mean_squared_error
 # Configurable base folder for the experiments
 my_basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
 
-res_folder = "results\\robust-metrics"
+res_folder = "results"
+res_robust_folder = res_folder + "\\robust-metrics"
+res_efficiency_folder = res_folder + "\\efficiency"
 
 
 def calculate_and_plot_robustness_metrics():
@@ -52,7 +54,7 @@ def calculate_and_plot_robustness_metrics():
     ds = Data.load_data_set()
     performance = metricanalyzer.analyze_metrics(ds, metrics)
     for measurement in performance:
-        plot_robustness_barchart(measurement, res_folder, performance[measurement])
+        plot_robustness_barchart(measurement, res_robust_folder, performance[measurement])
         # print out performance tables
         print("LATEX: "+measurement+":")
         print("------------------------")
@@ -216,7 +218,7 @@ def get_approach_efficiency(model_type, repetitions=50):
         start = time.time()
         predictor.start_training_workflow()
         end = time.time()
-        times.append(end-start)
+        times.append((end - start))
         accs.append(get_model_accuracy(predictor))
         meas.append(predictor.measurements.get_total_number_of_measurements())
     return np.mean(accs), np.mean(meas), np.mean(times)
@@ -234,8 +236,10 @@ def evaluate_efficiency_scatter_plot():
                   ('SVR', linear_model.SGDRegressor()),
                   ]
     # for each model in approaches
-    for model in approaches:
-        print("Approach {0}: {1}".format(model[0], get_approach_efficiency(model[1], 5)))
+    with open(res_efficiency_folder+"\\efficiencies.csv") as file:
+
+        for model in approaches:
+            print("Approach {0}: {1}".format(model[0], get_approach_efficiency(model[1], 5)))
 
     pass
 
