@@ -22,6 +22,7 @@ class PerformanceModelProvider:
             labels.append(measurements.get_one_measurement_point(feat))
             features.append(self.get_feature_vector(feat))
             np_features = np.concatenate(features)
+            print(self.get_feature_vector(feat), measurements.get_one_measurement_point(feat))
         instance = PerformanceModel(model_to_use=self.model, training_features=np_features, training_labels=labels)
         return instance.get_trained_model(), instance.get_internal_accuracy_score()
 

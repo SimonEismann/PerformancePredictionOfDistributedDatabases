@@ -181,7 +181,6 @@ def mean_absolute_percentage_error(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-
 def evaluate_total_workflow():
     # create approach instance
     predictor = approach.approach.PerformancePredictior(my_basefolder)
@@ -202,6 +201,8 @@ def get_model_accuracy(predictor):
             preds.append(predictor.get_prediction(validation))
             gold, full_vector = get_real_prediction_value(predictor.dataprovider, validation)
             reals.append(gold)
+            print("Features:", validation)
+            print("Prediction, Label, Error:", predictor.get_prediction(validation), gold, predictor.get_prediction(validation)/gold)
     rmse = math.sqrt(mean_squared_error(reals, preds))
     mape = mean_absolute_percentage_error(reals, preds)
     return mape
@@ -214,7 +215,7 @@ def get_approach_efficiency(model_type, repetitions=50):
     meas = []
     confs = []
     times = []
-    for i in range(0,repetitions):
+    for i in range(0, repetitions):
         predictor = approach.approach.PerformancePredictior(my_basefolder)
         start = time.time()
         predictor.start_training_workflow()
@@ -229,14 +230,14 @@ def get_approach_efficiency(model_type, repetitions=50):
 def evaluate_efficiency_scatter_plot():
     repetitions = 5
     approaches = [('LinReg', linear_model.LinearRegression()),
-                  ('Ridge', linear_model.Ridge()),
-                  ('ElasticNet', linear_model.ElasticNet()),
-                  ('BayesianRidge', linear_model.BayesianRidge()),
-                  ('HuberRegressor', linear_model.HuberRegressor()),
-                  #('MLP', MLPRegressor(max_iter=10000)),
-                  ('GBDT', GradientBoostingRegressor()),
-                  ('RandomForest', RandomForestRegressor()),
-                  ('SVR', linear_model.SGDRegressor()),
+                  # ('Ridge', linear_model.Ridge()),
+                  # ('ElasticNet', linear_model.ElasticNet()),
+                  # ('BayesianRidge', linear_model.BayesianRidge()),
+                  # ('HuberRegressor', linear_model.HuberRegressor()),
+                  # ('MLP', MLPRegressor()),
+                  # ('GBDT', GradientBoostingRegressor()),
+                  # ('RandomForest', RandomForestRegressor()),
+                  # ('SVR', linear_model.SGDRegressor()),
                   ]
     # for each model in approaches
     names = []
@@ -268,8 +269,6 @@ def evaluate_efficiency_scatter_plot():
     for i in range(0, len(names)):
         # latex export
         print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i], meass[i], confs[i], times[i]))
-
-    pass
 
 
 if __name__ == "__main__":

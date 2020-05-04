@@ -8,7 +8,7 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 pd.options.display.width = None
-basefolder = "mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
+basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
 
 
 class Dataset:
@@ -124,8 +124,8 @@ def load_data_set():
     for config in os.listdir(basefolder):
         if is_valid_exp(config):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
-                exp = Experiment(config)
-                if len(exp.throughput_values) != 0:
+                 exp = Experiment(config)
+                 if len(exp.throughput_values) != 0:
                     exps.append(exp)
     return Dataset(exps)
 

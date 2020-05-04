@@ -7,3 +7,4 @@ Pipfile.lock
 /results/predictionaccuracy/
 /results/timeseries/
 /results/efficiencies/
+/csvexport.csv

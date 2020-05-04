@@ -1,6 +1,8 @@
 # This file contains implementations and interfaces of data providers
 import Data
 import random
+import pandas as pd
+import numpy as np
 from approach import util
 
 
@@ -13,6 +15,10 @@ class DataProvider:
         Data.basefolder = basefolder
         self.ds = Data.load_data_set().calculate_robust_metric(robust_metric)
         self.derive_vm_sizes()
+        with open("csvexport.csv", "w+") as file:
+            self.ds["tp"] = self.ds["target/throughput"].apply(np.median)
+            self.ds.to_csv(file)
+            print(self.ds)
         # shuffle data points
         for index, row in self.ds.iterrows():
             ltps = list(self.ds.loc[index, "target/throughput"])

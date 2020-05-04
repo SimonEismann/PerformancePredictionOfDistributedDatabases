@@ -24,7 +24,7 @@ class PerformancePredictior:
     # Threshold quantifying which values of the CONFIDENCE_QUANTIFIER are deemed acceptable
     COV_THRESHOLD = 0.02
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
-    ACC_THRESHOLD = 0.6
+    ACC_THRESHOLD = 0.8
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     MAX_MEASUREMENTS = 10
     # Ratio of measurement points (in relation to the total number of points) that are taken
