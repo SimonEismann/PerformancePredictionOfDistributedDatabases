@@ -18,7 +18,6 @@ class DataProvider:
         with open("csvexport.csv", "w+") as file:
             self.ds["tp"] = self.ds["target/throughput"].apply(np.median)
             self.ds.to_csv(file)
-            print(self.ds)
         # shuffle data points
         for index, row in self.ds.iterrows():
             ltps = list(self.ds.loc[index, "target/throughput"])

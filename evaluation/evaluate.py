@@ -8,6 +8,8 @@ from scipy import stats
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
+from sklearn.dummy import DummyRegressor
+from sklearn.metrics import mean_absolute_error
 
 import Data
 from approach import metricanalyzer
@@ -178,8 +180,8 @@ def compare_baseline_methods(results, values):
 
 
 def mean_absolute_percentage_error(y_true, y_pred):
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    y_true, y_pred = np.array(y_true).reshape(1,-1), np.array(y_pred).reshape(1,-1)
+    return np.mean(np.abs((y_true - y_pred)) / y_true) * 100
 
 def evaluate_total_workflow():
     # create approach instance
@@ -201,11 +203,15 @@ def get_model_accuracy(predictor):
             preds.append(predictor.get_prediction(validation))
             gold, full_vector = get_real_prediction_value(predictor.dataprovider, validation)
             reals.append(gold)
-            print("Features:", validation)
-            print("Prediction, Label, Error:", predictor.get_prediction(validation), gold, predictor.get_prediction(validation)/gold)
+            #print("Features:", validation)
+            #print("Prediction, Label, Error:", predictor.get_prediction(validation), gold, predictor.get_prediction(validation)/gold)
     rmse = math.sqrt(mean_squared_error(reals, preds))
     mape = mean_absolute_percentage_error(reals, preds)
-    return mape
+    mae = mean_absolute_error(reals, preds)
+    print("mae", mae)
+    print("rmse", rmse)
+    print("mape", mape)
+    return mae
 
 
 def get_approach_efficiency(model_type, repetitions=50):
@@ -224,20 +230,46 @@ def get_approach_efficiency(model_type, repetitions=50):
         accs.append(get_model_accuracy(predictor))
         meas.append(predictor.measurements.get_total_number_of_measurements())
         confs.append(len(predictor.measurements.get_available_feature_set()))
-    return np.mean(accs), np.mean(meas), np.mean(confs), np.mean(times)
+    return accs, meas, confs, times
+
+
+def evaluate_single_accuracy_curve(model, name):
+    avgs = []
+    mins = []
+    maxs = []
+    ranges = range(0, 100, 5)
+    for i in ranges:
+        approach.approach.PerformancePredictior.ACC_THRESHOLD = i/100
+        accs, meas, confs, times = get_approach_efficiency(model, repetitions=3)
+        avgs.append(np.mean(accs))
+        mins.append(np.min(accs))
+        maxs.append(np.max(accs))
+
+    # Create plot
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.fill_between(ranges, mins, maxs, alpha=0.3, facecolor="red")
+
+    ax.plot(ranges, avgs, color='red')
+
+    plt.xlabel('Target accuracy threshold')
+    plt.ylabel('Prediction error (MAPE)')
+    plt.show()
+    fig.savefig(res_efficiency_folder+"\\"+str(name)+"performance.pdf")
 
 
 def evaluate_efficiency_scatter_plot():
-    repetitions = 5
+    repetitions = 2
     approaches = [('LinReg', linear_model.LinearRegression()),
-                  # ('Ridge', linear_model.Ridge()),
-                  # ('ElasticNet', linear_model.ElasticNet()),
-                  # ('BayesianRidge', linear_model.BayesianRidge()),
-                  # ('HuberRegressor', linear_model.HuberRegressor()),
-                  # ('MLP', MLPRegressor()),
-                  # ('GBDT', GradientBoostingRegressor()),
-                  # ('RandomForest', RandomForestRegressor()),
-                  # ('SVR', linear_model.SGDRegressor()),
+                  ('Ridge', linear_model.Ridge()),
+                  ('ElasticNet', linear_model.ElasticNet()),
+                  ('BayesianRidge', linear_model.BayesianRidge()),
+                  ('HuberRegressor', linear_model.HuberRegressor()),
+                  #('MLP', MLPRegressor()),
+                  ('GBDT', GradientBoostingRegressor()),
+                  ('RandomForest', RandomForestRegressor()),
+                  ('SVR', linear_model.SGDRegressor()),
+                  ('Dummy', DummyRegressor())
                   ]
     # for each model in approaches
     names = []
@@ -271,8 +303,26 @@ def evaluate_efficiency_scatter_plot():
         print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i], meass[i], confs[i], times[i]))
 
 
+    cmap = plt.get_cmap("tab10")
+
+    # Create plot
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
+    for i in range(len(approaches)):
+        ax.scatter(confs[i], accs[i], alpha=0.8, c=cmap(i).reshape(1, -1), edgecolors='none', s=30, label=approaches[i][0])
+
+    # print scatter plot
+    plt.xlabel('Required configuration points')
+    plt.ylabel('Prediction error (MAPE)')
+    plt.legend(loc=2)
+    plt.show()
+    fig.savefig(res_efficiency_folder+"\\scatter.pdf")
+
+
 if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
     #evaluate_total_workflow()
-    evaluate_efficiency_scatter_plot()
+    #evaluate_efficiency_scatter_plot()
+    evaluate_single_accuracy_curve(linear_model.LinearRegression(), "LinReg")

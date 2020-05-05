@@ -12,8 +12,8 @@ import scipy.stats as stats
 sns.set_palette(sns.color_palette("hls", 20))
 
 
-distplots = False
-prediction = True
+distplots = True
+prediction = False
 
 
 def calculateHL(l_input):

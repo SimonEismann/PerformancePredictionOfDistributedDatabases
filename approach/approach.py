@@ -30,7 +30,7 @@ class PerformancePredictior:
     # Ratio of measurement points (in relation to the total number of points) that are taken
     INITIAL_MEASUREMENT_RATIO = 0.1
     # Maximum ratio of measurement points (in relation to the total number of points) that are allowed to be taken
-    UPPER_BOUND_MEASUREMENT_RATIO = 0.8
+    UPPER_BOUND_MEASUREMENT_RATIO = 0.5
     # ML model to use for learning and prediction
     MODEL_TYPE = RandomForestRegressor()
 
