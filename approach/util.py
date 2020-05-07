@@ -71,3 +71,13 @@ def get_core_and_memory(vmsize):
     if vmsize not in vmsize_map:
         raise ValueError("The VM size associated with the name " + str(vmsize) + " could not be mapped...")
     return vmsize_map[vmsize]
+
+# Calculates the mean absolute percentage error (MAPE)
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true).reshape(1,-1), np.array(y_pred).reshape(1,-1)
+    return np.mean(np.abs((y_true - y_pred)) / y_true) * 100
+
+# Calculates the negative mean absolute percentage error (NMAPE) of the given estimator
+def negative_mape_scorer(estimator, X, y):
+    y_pred = estimator.predict(X)
+    return - mean_absolute_percentage_error(y, y_pred)/100

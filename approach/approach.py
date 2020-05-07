@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
+import math
 
 import approach.dataprovider as dp
 from approach.units.measurementunit import MeasurementSet
@@ -23,14 +24,16 @@ class PerformancePredictior:
     CONFIDENCE_QUANTIFIER = stats.variation
     # Threshold quantifying which values of the CONFIDENCE_QUANTIFIER are deemed acceptable
     COV_THRESHOLD = 0.02
-    # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
-    ACC_THRESHOLD = 0.8
+    # Target accuracy threshold for the performance models internal validation until it is deemed acceptable (negative values for error scores)
+    ACC_THRESHOLD = -0.15
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     MAX_MEASUREMENTS = 10
     # Ratio of measurement points (in relation to the total number of points) that are taken
-    INITIAL_MEASUREMENT_RATIO = 0.1
+    INITIAL_MEASUREMENT_RATIO = 0.05
+    # Ratio of measurement points (in relation to the total number of points) that are taken
+    INCREMENT_MEASUREMENT_RATIO = 0.01
     # Maximum ratio of measurement points (in relation to the total number of points) that are allowed to be taken
-    UPPER_BOUND_MEASUREMENT_RATIO = 0.5
+    UPPER_BOUND_MEASUREMENT_RATIO = 0.9
     # ML model to use for learning and prediction
     MODEL_TYPE = RandomForestRegressor()
 
@@ -65,7 +68,7 @@ class PerformancePredictior:
                         curr_points, len(self.configuration_provider.get_feature_space()),
                         PerformancePredictior.UPPER_BOUND_MEASUREMENT_RATIO))
                 break
-            self.__add_one_measurement(curr_points)
+            self.__add_one_increment()
             model, accuracy = self.modelprovider.create_model(self.measurements)
             # print("Improved internal model accuracy using " + (str(len(self.measurements.get_available_feature_set()))) + " measurements: " + str(
             #     accuracy))
@@ -97,6 +100,13 @@ class PerformancePredictior:
         #        feat_len, PerformancePredictior.INITIAL_MEASUREMENT_RATIO, points))
         for i in range(0, points):
             self.__add_one_measurement(i)
+
+    # Increases the current number of measurements by the defined incremental amount (rounded up)
+    def __add_one_increment(self):
+        current = len(self.measurements.get_available_feature_set())
+        points = math.ceil(len(self.configuration_provider.get_feature_space()) * PerformancePredictior.INCREMENT_MEASUREMENT_RATIO)
+        for i in range(points):
+            self.__add_one_measurement(current+i)
 
     # Selects a new configuration point and adds it to the measurement set.
     # Index is the number of already measured points.

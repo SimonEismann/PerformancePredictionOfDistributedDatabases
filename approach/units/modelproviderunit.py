@@ -22,7 +22,6 @@ class PerformanceModelProvider:
             labels.append(measurements.get_one_measurement_point(feat))
             features.append(self.get_feature_vector(feat))
             np_features = np.concatenate(features)
-            #print(self.get_feature_vector(feat), measurements.get_one_measurement_point(feat))
         instance = PerformanceModel(model_to_use=self.model, training_features=np_features, training_labels=labels)
         return instance.get_trained_model(), instance.get_internal_accuracy_score()
 
@@ -67,6 +66,6 @@ class PerformanceModel:
         return self.score
 
     def __train_model(self, model_to_use):
-        score = cross_val_score(estimator=model_to_use, X=self.features, y=self.labels, cv=3, n_jobs=-1, scoring="neg_mean_absolute_error").mean()
+        score = cross_val_score(estimator=model_to_use, X=self.features, y=self.labels, cv=3, n_jobs=-1, scoring=util.negative_mape_scorer).mean()
         full_model = model_to_use.fit(X=self.features, y=self.labels)
         return full_model, score

@@ -208,10 +208,7 @@ def get_model_accuracy(predictor):
     rmse = math.sqrt(mean_squared_error(reals, preds))
     mape = mean_absolute_percentage_error(reals, preds)
     mae = mean_absolute_error(reals, preds)
-    print("mae", mae)
-    print("rmse", rmse)
-    print("mape", mape)
-    return mae
+    return mape
 
 
 def get_approach_efficiency(model_type, repetitions=50):
@@ -233,43 +230,46 @@ def get_approach_efficiency(model_type, repetitions=50):
     return accs, meas, confs, times
 
 
-def evaluate_single_accuracy_curve(model, name):
-    avgs = []
-    mins = []
-    maxs = []
-    ranges = range(0, 100, 5)
-    for i in ranges:
-        approach.approach.PerformancePredictior.ACC_THRESHOLD = i/100
-        accs, meas, confs, times = get_approach_efficiency(model, repetitions=3)
-        avgs.append(np.mean(accs))
-        mins.append(np.min(accs))
-        maxs.append(np.max(accs))
-
+def evaluate_accuracy_curves(approaches, repetitions=50):
     # Create plot
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    ax.fill_between(ranges, mins, maxs, alpha=0.3, facecolor="red")
 
-    ax.plot(ranges, avgs, color='red')
+    for name, app, color, marker in approaches:
+        avgs = []
+        mins = []
+        maxs = []
+        confis = []
+        ranges = np.arange(0, 1, 0.05)
+        for i in ranges:
+            approach.approach.PerformancePredictior.ACC_THRESHOLD = i
+            accs, meas, confs, times = get_approach_efficiency(app, repetitions=repetitions)
+            avgs.append(np.mean(accs))
+            mins.append(np.min(accs))
+            maxs.append(np.max(accs))
+            confis.append(np.mean(confs))
+        ax.fill_between(ranges, mins, maxs, alpha=0.3, facecolor=color)
+        ax.plot(ranges, avgs, color=color)
+        for j in range(len(confis)):
+            plt.text(ranges[j], avgs[j], "{0:.1f}".format(confis[j]), color=color)
 
     plt.xlabel('Target accuracy threshold')
     plt.ylabel('Prediction error (MAPE)')
+    plt.ylim((0, 100))
     plt.show()
-    fig.savefig(res_efficiency_folder+"\\"+str(name)+"performance.pdf")
+    fig.savefig(res_efficiency_folder+r"\performance.pdf")
 
 
-def evaluate_efficiency_scatter_plot():
-    repetitions = 2
-    approaches = [('LinReg', linear_model.LinearRegression()),
-                  ('Ridge', linear_model.Ridge()),
-                  ('ElasticNet', linear_model.ElasticNet()),
-                  ('BayesianRidge', linear_model.BayesianRidge()),
-                  ('HuberRegressor', linear_model.HuberRegressor()),
-                  #('MLP', MLPRegressor()),
-                  ('GBDT', GradientBoostingRegressor()),
-                  ('RandomForest', RandomForestRegressor()),
-                  ('SVR', linear_model.SGDRegressor()),
-                  ('Dummy', DummyRegressor())
+def evaluate_efficiency_scatter_plot(repetitions=50):
+    approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
+                  ('Ridge', linear_model.Ridge(), "green", "v"),
+                  ('ElasticNet', linear_model.ElasticNet(), "orange", "2"),
+                  ('BayesianRidge', linear_model.BayesianRidge(), "blue", "3"),
+                  ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
+                  ('GBDT', GradientBoostingRegressor(), "gray", "*"),
+                  ('RandomForest', RandomForestRegressor(), "purple", "+"),
+                  ('SVR', linear_model.SGDRegressor(), "pink", "x"),
+                  ('Dummy', DummyRegressor(), "brown", "d")
                   ]
     # for each model in approaches
     names = []
@@ -290,10 +290,10 @@ def evaluate_efficiency_scatter_plot():
 
             # storing for figure
             names.append(model[0])
-            accs.append(acc)
-            meass.append(meas)
-            confs.append(conf)
-            times.append(time)
+            accs.append(np.mean(acc))
+            meass.append(np.mean(meas))
+            confs.append(np.mean(conf))
+            times.append(np.mean(time))
 
     print("-------------------")
     print("LATEX")
@@ -302,20 +302,21 @@ def evaluate_efficiency_scatter_plot():
         # latex export
         print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i], meass[i], confs[i], times[i]))
 
-
     cmap = plt.get_cmap("tab10")
 
     # Create plot
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6, 4))
     ax = fig.add_subplot(1, 1, 1)
 
     for i in range(len(approaches)):
-        ax.scatter(confs[i], accs[i], alpha=0.8, c=cmap(i).reshape(1, -1), edgecolors='none', s=30, label=approaches[i][0])
+        ax.scatter(confs[i], accs[i], alpha=0.8, c=approaches[i][2], edgecolors='none', s=30, label=approaches[i][0], marker=approaches[i][3])
 
     # print scatter plot
     plt.xlabel('Required configuration points')
     plt.ylabel('Prediction error (MAPE)')
-    plt.legend(loc=2)
+    plt.ylim((0, 50))
+    plt.xlim((0, 85))
+    plt.legend(loc=1)
     plt.show()
     fig.savefig(res_efficiency_folder+"\\scatter.pdf")
 
@@ -324,5 +325,10 @@ if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
     #evaluate_total_workflow()
-    #evaluate_efficiency_scatter_plot()
-    evaluate_single_accuracy_curve(linear_model.LinearRegression(), "LinReg")
+    evaluate_efficiency_scatter_plot(50)
+    # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
+    #               ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
+    #               ('GBDT', GradientBoostingRegressor(), "gray", "*"),
+    #               ('Dummy', DummyRegressor(), "brown", "d")
+    #               ]
+    # evaluate_accuracy_curves(approaches, 5)
