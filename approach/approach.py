@@ -35,6 +35,8 @@ class PerformancePredictior:
     ACC_THRESHOLD = -0.1
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     MAX_MEASUREMENTS = 10
+
+    # For the model construction
     # Ratio of measurement points (in relation to the total number of points) that are taken
     INITIAL_MEASUREMENT_RATIO = 0.05
     # Ratio of measurement points (in relation to the total number of points) that are taken
@@ -112,7 +114,6 @@ class PerformancePredictior:
         # Return model prediction of feature set
         return self.model.predict(self.modelprovider.get_feature_vector(features))
 
-    # Defines and collects the set of initial measurements to conduct
     def __get_initial_measurements(self):
         """Defines and collects the set of initial measurements to conduct"""
         # Determine number of points to be measured based on the size of the feature set

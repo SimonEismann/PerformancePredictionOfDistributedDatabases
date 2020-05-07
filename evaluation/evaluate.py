@@ -272,6 +272,7 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
                   ('Dummy', DummyRegressor(), "brown", "d")
                   ]
     # for each model in approaches
+    thresholds = [-0.1, -0.2, -0.3]
     names = []
     accs = []
     meass = []
@@ -280,20 +281,22 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
     with open(res_efficiency_folder+"\\efficiencies.csv", "w+") as file:
         file.write("Approach, Avg. MAPE, Avg. Measurements, Avg. Configurations, Avg. Time (s)\n")
         for model in approaches:
-            # actural execution
-            acc, meas, conf, time = get_approach_efficiency(model[1], repetitions=repetitions)
-            # file export
-            file.write("{0}, {1}, {2}, {3}, {4}\n".format(model[0], acc, meas, conf, time))
-            file.flush()
+            for t in thresholds:
+                approach.approach.PerformancePredictior.ACC_THRESHOLD = t
+                # actural execution
+                acc, meas, conf, time = get_approach_efficiency(model[1], repetitions=repetitions)
+                # file export
+                file.write("{0}, {1}, {2}, {3}, {4}\n".format(model[0], acc, meas, conf, time))
+                file.flush()
 
-            print("Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0])), acc, meas, conf, time))
+                print("Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0]+str(t))), acc, meas, conf, time))
 
-            # storing for figure
-            names.append(model[0])
-            accs.append(np.mean(acc))
-            meass.append(np.mean(meas))
-            confs.append(np.mean(conf))
-            times.append(np.mean(time))
+                # storing for figure
+                names.append(model[0]+str(t))
+                accs.append(np.mean(acc))
+                meass.append(np.mean(meas))
+                confs.append(np.mean(conf))
+                times.append(np.mean(time))
 
     print("-------------------")
     print("LATEX")
@@ -309,7 +312,14 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
     ax = fig.add_subplot(1, 1, 1)
 
     for i in range(len(approaches)):
-        ax.scatter(confs[i], accs[i], alpha=0.8, c=approaches[i][2], edgecolors='none', s=30, label=approaches[i][0], marker=approaches[i][3])
+        conflist = []
+        acclist = []
+        for k in range(len(thresholds)):
+            conflist.append(confs[i*len(thresholds) + k])
+            acclist.append(accs[i*len(thresholds) + k])
+        ax.scatter(conflist, acclist, alpha=0.8, c=approaches[i][2], edgecolors='none', s=30,
+                   label=approaches[i][0], marker=approaches[i][3])
+
 
     # print scatter plot
     plt.xlabel('Required configuration points')
@@ -325,7 +335,7 @@ if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
     #evaluate_total_workflow()
-    evaluate_efficiency_scatter_plot(50)
+    evaluate_efficiency_scatter_plot(2)
     # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
     #               ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
     #               ('GBDT', GradientBoostingRegressor(), "gray", "*"),
