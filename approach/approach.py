@@ -1,12 +1,16 @@
-# Our approach consists of three main steps.
-# 0. Choose appropriate robust metric for analyzing the data (Done offline by metricAnalyzer.py)
-# 1. Dynamically select the right amount of measurement repetitions of each data point until a certain threshold of measurement accuracy is met
-# 2. Dynamically select the next point of the measurement space, required to be sampled in order to increase the accuracy of the model
-# 3. Model the whole search space with the available points using different ML algorithms
+"""
+Main module of the implementation of our approach, as submitted in our scientific paper.
+Our approach consists of three main steps:
+0. Choose appropriate robust metric for analyzing the data (Done offline by metricAnalyzer.py)
+1. Dynamically select the right amount of measurement repetitions of each data point until a certain threshold of measurement accuracy is met
+2. Dynamically select the next point of the measurement space, required to be sampled in order to increase the accuracy of the model
+3. Model the whole search space with the available points using different ML algorithms
+"""
+import math
+
 import numpy as np
 from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
-import math
 
 import approach.dataprovider as dp
 from approach.units.measurementunit import MeasurementSet
@@ -14,8 +18,11 @@ from approach.units.modelproviderunit import PerformanceModelProvider
 from approach.units.samplingunit import ConfigurationPointProvider
 
 
-# This is the main class of the performance prediction step. This class starts the workflow, stores all required constants and coordinates the individual units.
 class PerformancePredictior:
+    """
+    This is the main class of the performance prediction step. This class starts the workflow, stores all required
+    constants and coordinates the individual units.
+    """
     # Robust metric to be used in order to summarize one benchmark run
     ROBUST_METRIC = lambda x: np.percentile(x, 95)
     # Metric to summarize multiplie repetitions of a benchmark run
@@ -25,7 +32,7 @@ class PerformancePredictior:
     # Threshold quantifying which values of the CONFIDENCE_QUANTIFIER are deemed acceptable
     COV_THRESHOLD = 0.02
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable (negative values for error scores)
-    ACC_THRESHOLD = -0.15
+    ACC_THRESHOLD = -0.1
     # Target accuracy threshold for the performance models internal validation until it is deemed acceptable
     MAX_MEASUREMENTS = 10
     # Ratio of measurement points (in relation to the total number of points) that are taken
@@ -37,8 +44,14 @@ class PerformancePredictior:
     # ML model to use for learning and prediction
     MODEL_TYPE = RandomForestRegressor()
 
-    # Initializing the approach objects, with all required sub-units. The datafolder is forwarded to the DataProvider in order to locate the measurement files.
     def __init__(self, datafolder):
+        """
+        Initializing the approach objects, with all required sub-units.
+
+        Keyword arguments:
+        datafolder -- the datafolder is forwarded to the DataProvider in order to locate the measurement files.
+        """
+
         # the provider of the measurement data
         self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.ROBUST_METRIC)
         # storing  measurement data
@@ -50,8 +63,11 @@ class PerformancePredictior:
         self.modelprovider = PerformanceModelProvider(model_type=PerformancePredictior.MODEL_TYPE)
         self.configuration_provider = ConfigurationPointProvider(self.dataprovider.get_all_possible_values())
 
-    # Main entry point of the performance prediction workflow. Executes the measurment-modelling loop until a sufficient accuracy is achieved. Then returns the final model.
     def start_training_workflow(self):
+        """
+        Main entry point of the performance prediction workflow. Executes the measurment-modelling loop until a
+        sufficient accuracy is achieved. Then returns the final model.
+        """
         # print("Started model workflow.")
         # print("Conducting initial set of measurements.")
         self.__get_initial_measurements()
@@ -78,9 +94,15 @@ class PerformancePredictior:
         self.model = model
         return self
 
-    # Returns a prediction for the given feature set. Raises a ValueError if the feature is unknown, and returns the
-    # original measurement, if the point is already part of the measurement set.
     def get_prediction(self, features):
+        """
+        Returns a prediction for the given feature set. Raises a ValueError if the feature is unknown, and returns the
+        original measurement, if the point is already part of the measurement set.
+
+        Keyword arguments:
+        features -- the feature for the prediction
+        """
+
         # Check if feature is valid
         if features not in self.configuration_provider.get_feature_space():
             raise ValueError("The feature combination {0} is not known to this model.".format(features))
@@ -92,6 +114,7 @@ class PerformancePredictior:
 
     # Defines and collects the set of initial measurements to conduct
     def __get_initial_measurements(self):
+        """Defines and collects the set of initial measurements to conduct"""
         # Determine number of points to be measured based on the size of the feature set
         feat_len = len(self.configuration_provider.feature_space)
         points = int(feat_len * PerformancePredictior.INITIAL_MEASUREMENT_RATIO)
@@ -101,15 +124,20 @@ class PerformancePredictior:
         for i in range(0, points):
             self.__add_one_measurement(i)
 
-    # Increases the current number of measurements by the defined incremental amount (rounded up)
     def __add_one_increment(self):
+        """Increases the current number of measurements by the defined incremental amount (rounded up)"""
         current = len(self.measurements.get_available_feature_set())
-        points = math.ceil(len(self.configuration_provider.get_feature_space()) * PerformancePredictior.INCREMENT_MEASUREMENT_RATIO)
+        points = math.ceil(
+            len(self.configuration_provider.get_feature_space()) * PerformancePredictior.INCREMENT_MEASUREMENT_RATIO)
         for i in range(points):
-            self.__add_one_measurement(current+i)
+            self.__add_one_measurement(current + i)
 
-    # Selects a new configuration point and adds it to the measurement set.
-    # Index is the number of already measured points.
     def __add_one_measurement(self, index):
+        """
+        Selects a new configuration point and adds it to the measurement set.
+
+        Keyword arguments:
+        index -- the number of already measured points.
+        """
         feats = self.configuration_provider.get_next_measurement_features(index)
         self.measurements.get_one_measurement_point(feats)
