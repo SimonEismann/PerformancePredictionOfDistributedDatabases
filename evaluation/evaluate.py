@@ -1,4 +1,6 @@
-# Main script for evaluation purposes
+"""
+Main script for evaluation.
+"""
 import math
 import time
 
@@ -22,24 +24,24 @@ import approach.units.dataproviderunit as dp
 # Configurable base folder for the experiments
 my_basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
 
+# Target folders for calculated results
 res_folder = "results"
 res_robust_folder = res_folder + "\\robust-metrics"
 res_efficiency_folder = res_folder + "\\efficiencies"
 
 
 def calculate_and_plot_robustness_metrics():
+    """
+    Analyzes the different robustness metrics by calculating them, plotting them, and printing a table with the results.
+    :return: None
+    """
     # List of metrics to be analyzed
     metrics = [('Mean', np.mean),
                ('Median', np.median),
-               #('Max', np.max),
-               #('Min', np.min),
                ('95th percentile', lambda x: np.percentile(x, 95)),
                ('90th percentile', lambda x: np.percentile(x, 90)),
                ('80th percentile', lambda x: np.percentile(x, 80)),
                ('70th percentile', lambda x: np.percentile(x, 70)),
-               #('20th percentile', lambda x: np.percentile(x, 20)),
-               #('10th percentile', lambda x: np.percentile(x, 10)),
-               #('5th percentile', lambda x: np.percentile(x, 5)),
                ('Trimmed(5%) mean', lambda x: stats.trim_mean(x, 0.05)),
                ('Trimmed(10%) mean', lambda x: stats.trim_mean(x, 0.1)),
                ('Trimmed(20%) mean', lambda x: stats.trim_mean(x, 0.2)),
@@ -56,11 +58,11 @@ def calculate_and_plot_robustness_metrics():
     for measurement in performance:
         plot_robustness_barchart(measurement, res_robust_folder, performance[measurement])
         # print out performance tables
-        print("LATEX: "+measurement+":")
+        print("LATEX: " + measurement + ":")
         print("------------------------")
         print("Metric& \tAvg& \tStd\\\\\\hline")
         for key, value in performance[measurement].items():
-            print(unicode_to_latex(str(key))+ " & \t{0:.3f} & \t{1:.3f} \\\\".format(value[0], value[1]))
+            print(unicode_to_latex(str(key)) + " & \t{0:.3f} & \t{1:.3f} \\\\".format(value[0], value[1]))
         print("------------------------")
     print("LATEX: COMBINED")
     print("------------------------")
@@ -75,10 +77,9 @@ def calculate_and_plot_robustness_metrics():
         # for each metric
         tmp = unicode_to_latex(str(key))
         for measurement in performance:
-             tmp = tmp + ("\t&{0:.3f}\t& {1:.3f}").format(performance[measurement][key][0], performance[measurement][key][1])
-        print(tmp+ "\\\\")
-
-
+            tmp = tmp + ("\t&{0:.3f}\t& {1:.3f}").format(performance[measurement][key][0],
+                                                         performance[measurement][key][1])
+        print(tmp + "\\\\")
 
     print("------------------------")
 
@@ -89,19 +90,27 @@ def calculate_and_plot_robustness_metrics():
 
 
 def plot_robustness_barchart(name, folder, metrics):
+    """
+    Plots a bar-chart of the robustness metrics.
+    :param name: Name of the metric for the export file.
+    :param folder: Folder to export the plot into.
+    :param metrics: The actual metrics to plot.
+    :return: None
+    """
     avgs = [i[0] for i in list(metrics.values())]
     stds = [i[1] for i in list(metrics.values())]
     fig = plt.figure(figsize=(8, 6))
     rects = plt.bar(metrics.keys(), height=avgs, yerr=stds)
     plt.xticks(rotation=90)
     plt.tight_layout()
-    #rects = ax.patches
+    # rects = ax.patches
     # Make labels.
     for rect in rects:
         height = rect.get_height()
         fig.axes[0].annotate('{:.3}'.format(height),
-                    xy=(rect.get_x() + rect.get_width() / 2, height), xytext=(0, 3), textcoords="offset points",
-                    ha='center', va='bottom')
+                             xy=(rect.get_x() + rect.get_width() / 2, height), xytext=(0, 3),
+                             textcoords="offset points",
+                             ha='center', va='bottom')
 
     plt.show()
     plt.savefig(folder + "\\" + name + ".png")
@@ -109,15 +118,28 @@ def plot_robustness_barchart(name, folder, metrics):
 
 
 def get_real_prediction_value(dataprovider, features, target="target/throughput"):
+    """
+    Gets the real value for the given target features based on all available measurements.
+    :param dataprovider: An instance of the dataprovider to use for loading the data.
+    :param features: The target features to analyze.
+    :param target: The target metric to search for. Default: "target/throughput"
+    :return: The aggregated gold value, as well as the full measurement vector, based on which this value was derived.
+    """
     full_vector = dataprovider.get_exp(target, features)
     gold_median = approach.approach.PerformancePredictior.MEASUREMENT_POINT_AGGREGATOR(full_vector)
     return gold_median, full_vector
 
 
 def evaluate_measurement_point_selection():
-    resultsmape = {"approach": [], "gold":[], "1-point":[], "2-point":[], "3-point":[], "5-point":[], "10-point":[]}
-    resultsrmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
-    points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
+    """
+    Evaluates the different techniques for measurement point selection.
+    :return: None
+    """
+    resultsmape = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [],
+                   "10-point": []}
+    resultsrmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [],
+                   "10-point": []}
+    points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
 
     for i in range(100):
         # create all feature instances
@@ -127,14 +149,15 @@ def evaluate_measurement_point_selection():
         # create approach instance
         predictor = approach.approach.PerformancePredictior(my_basefolder).measurements
         max_diff = 0
-        baselines = {"gold":[], "approach":[], "1-point": [], "2-point": [], "3-point":[], "5-point": [], "10-point": []}
+        baselines = {"gold": [], "approach": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [],
+                     "10-point": []}
         for feats in combinations:
             gold_median, full_vector = get_real_prediction_value(dataprovider=data, features=feats)
             baselines["gold"].append(gold_median)
             compare_baseline_methods(baselines, full_vector)
             est = predictor.get_one_measurement_point(feats)
             baselines["approach"].append(est)
-            #print(str(feats) + ": " + str(gold_median) + ", estimated: " + str(est)+".")
+            # print(str(feats) + ": " + str(gold_median) + ", estimated: " + str(est)+".")
             diff = abs(est - gold_median)
             if diff > max_diff:
                 max_diff = diff
@@ -142,15 +165,15 @@ def evaluate_measurement_point_selection():
         rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines["approach"]))
         mape = mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
         no_ms = predictor.get_total_number_of_measurements()
-        print("Achieved a MAPE of "+ str(mape)+ " using a total of "+str(no_ms)+" measurement points.")
-        print("Achieved a RMSE of "+ str(rmse)+ " using a total of "+str(no_ms)+" measurement points.")
-        print("The maximal deviation happened at "+str(max_difffeat)+" with a diference of "+str(max_diff)+". ")
+        print("Achieved a MAPE of " + str(mape) + " using a total of " + str(no_ms) + " measurement points.")
+        print("Achieved a RMSE of " + str(rmse) + " using a total of " + str(no_ms) + " measurement points.")
+        print("The maximal deviation happened at " + str(max_difffeat) + " with a diference of " + str(max_diff) + ". ")
         for key in resultsmape:
             rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines[key]))
             mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
             resultsrmse[key].append(rmse)
             resultsmape[key].append(mape)
-        points["approach"].append(no_ms/len(combinations))
+        points["approach"].append(no_ms / len(combinations))
         points["gold"].append(len(full_vector))
         points["1-point"].append(1)
         points["2-point"].append(2)
@@ -160,16 +183,26 @@ def evaluate_measurement_point_selection():
     print("------------------------------------")
     print("Final Results.")
     for key in resultsmape:
-        print(str(key)+": Avg. MAPE: "+str(np.mean(resultsmape[key]))+"% using an average of "+str(np.mean(points[key])) + " measurement points.")
+        print(str(key) + ": Avg. MAPE: " + str(np.mean(resultsmape[key])) + "% using an average of " + str(
+            np.mean(points[key])) + " measurement points.")
         print(str(key) + ": Avg. RMSE: " + str(np.mean(resultsrmse[key])) + " using an average of " + str(
             np.mean(points[key])) + " measurement points.")
     print("------------------------------------")
     print("LATEX TABLE.")
     print("Approach \t& MAPE \t& RMSE \t& # points\\\\")
     for key in resultsmape:
-        print(("{0} \t& {1:.2f} \t& {2:.1f} \t& {3:.2f}\\\\").format(unicode_to_latex(str(key)), np.mean(resultsmape[key]), np.mean(resultsrmse[key]), np.mean(points[key])))
+        print(("{0} \t& {1:.2f} \t& {2:.1f} \t& {3:.2f}\\\\").format(unicode_to_latex(str(key)),
+                                                                     np.mean(resultsmape[key]),
+                                                                     np.mean(resultsrmse[key]), np.mean(points[key])))
+
 
 def compare_baseline_methods(results, values):
+    """
+    Adds the performance of the baseline methods to the given result lists.
+    :param results: The dictionary containing the result lists.
+    :param values: The values to aggregate from.
+    :return: None
+    """
     results["1-point"].append(values[0])
     results["2-point"].append(np.median(values[0:2]))
     results["3-point"].append(np.median(values[0:3]))
@@ -178,10 +211,21 @@ def compare_baseline_methods(results, values):
 
 
 def mean_absolute_percentage_error(y_true, y_pred):
-    y_true, y_pred = np.array(y_true).reshape(1,-1), np.array(y_pred).reshape(1,-1)
+    """
+    Calculates the mean absolute percentage error (MAPE).
+    :param y_true: The real values to compare with.
+    :param y_pred: The predicted values to compare.
+    :return: The calculated error.
+    """
+    y_true, y_pred = np.array(y_true).reshape(1, -1), np.array(y_pred).reshape(1, -1)
     return np.mean(np.abs((y_true - y_pred)) / y_true) * 100
 
+
 def evaluate_total_workflow():
+    """
+    Execute and evaluate on model training workflow.
+    :return: None
+    """
     # create approach instance
     predictor = approach.approach.PerformancePredictior(my_basefolder)
     predictor.start_training_workflow()
@@ -189,6 +233,11 @@ def evaluate_total_workflow():
 
 
 def get_model_accuracy(predictor):
+    """
+    Calculate and return the accuracy of one performance model instance.
+    :param predictor: The performance model to evaluate
+    :return: The calculated MAPE of this performance model.
+    """
     preds = []
     reals = []
     feature_set = predictor.configuration_provider.get_feature_space()
@@ -201,8 +250,8 @@ def get_model_accuracy(predictor):
             preds.append(predictor.get_prediction(validation))
             gold, full_vector = get_real_prediction_value(predictor.dataprovider, validation)
             reals.append(gold)
-            #print("Features:", validation)
-            #print("Prediction, Label, Error:", predictor.get_prediction(validation), gold, predictor.get_prediction(validation)/gold)
+            # print("Features:", validation)
+            # print("Prediction, Label, Error:", predictor.get_prediction(validation), gold, predictor.get_prediction(validation)/gold)
     rmse = math.sqrt(mean_squared_error(reals, preds))
     mape = mean_absolute_percentage_error(reals, preds)
     mae = mean_absolute_error(reals, preds)
@@ -210,6 +259,12 @@ def get_model_accuracy(predictor):
 
 
 def get_approach_efficiency(model_type, repetitions=50):
+    """
+    Analyses the performance of a whole workflow execution based on a single model to use. Not multi-threading safe!
+    :param model_type: The model to apply and to evaluate.
+    :param repetitions: The number of repetitions to repeat the evaluation. Default: 50
+    :return: Lists of achieved errors, required measurements, required configurations, and required computation times.
+    """
     # Careful! This breaks multi-thread compatability!
     approach.approach.PerformancePredictior.MODEL_TYPE = model_type
     accs = []
@@ -229,6 +284,12 @@ def get_approach_efficiency(model_type, repetitions=50):
 
 
 def evaluate_accuracy_curves(approaches, repetitions=50):
+    """
+    Evaluate and plot the accuracy of different approaches in comparison to the target threshold.
+    :param approaches: A list of approaches to include.
+    :param repetitions: The number of repetitions. Default: 50.
+    :return: None
+    """
     # Create plot
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -240,7 +301,7 @@ def evaluate_accuracy_curves(approaches, repetitions=50):
         confis = []
         ranges = np.arange(0, 1, 0.05)
         for i in ranges:
-            approach.approach.PerformancePredictior.ACC_THRESHOLD = i
+            approach.approach.PerformancePredictior.ACC_THRESHOLD = - i
             accs, meas, confs, times = get_approach_efficiency(app, repetitions=repetitions)
             avgs.append(np.mean(accs))
             mins.append(np.min(accs))
@@ -255,10 +316,15 @@ def evaluate_accuracy_curves(approaches, repetitions=50):
     plt.ylabel('Prediction error (MAPE)')
     plt.ylim((0, 100))
     plt.show()
-    fig.savefig(res_efficiency_folder+r"\performance.pdf")
+    fig.savefig(res_efficiency_folder + r"\performance.pdf")
 
 
 def evaluate_efficiency_scatter_plot(repetitions=50):
+    """
+    Creates a table and a scatter plot (connected with dashed lines) of the efficiencies of all available approaches.
+    :param repetitions: The number of repetitions. Default: 50
+    :return: None
+    """
     approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
                   ('Ridge', linear_model.Ridge(), "green", "v"),
                   ('ElasticNet', linear_model.ElasticNet(), "orange", "2"),
@@ -276,7 +342,7 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
     meass = []
     confs = []
     times = []
-    with open(res_efficiency_folder+"\\efficiencies.csv", "w+") as file:
+    with open(res_efficiency_folder + "\\efficiencies.csv", "w+") as file:
         file.write("Approach, Avg. MAPE, Avg. Measurements, Avg. Configurations, Avg. Time (s)\n")
         for model in approaches:
             for t in thresholds:
@@ -287,10 +353,12 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
                 file.write("{0}, {1}, {2}, {3}, {4}\n".format(model[0], acc, meas, conf, time))
                 file.flush()
 
-                print("Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0]+str(t))), acc, meas, conf, time))
+                print(
+                    "Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0] + str(t))), acc, meas, conf,
+                                                              time))
 
                 # storing for figure
-                names.append(model[0]+str(t))
+                names.append(model[0] + str(t))
                 accs.append(np.mean(acc))
                 meass.append(np.mean(meas))
                 confs.append(np.mean(conf))
@@ -298,12 +366,12 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
 
     print("-------------------")
     print("LATEX")
-    print("Approach \t& Avg. MAPE \t& Avg. Measurements (Max. 900) \t& Avg. Configrations (Max. 90) \t& Avg. Time (s)\\\\")
+    print(
+        "Approach \t& Avg. MAPE \t& Avg. Measurements (Max. 900) \t& Avg. Configrations (Max. 90) \t& Avg. Time (s)\\\\")
     for i in range(0, len(names)):
         # latex export
-        print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i], meass[i], confs[i], times[i]))
-
-    cmap = plt.get_cmap("tab10")
+        print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i],
+                                                                           meass[i], confs[i], times[i]))
 
     # Create plot
     fig = plt.figure(figsize=(6, 4))
@@ -313,13 +381,12 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
         conflist = []
         acclist = []
         for k in range(len(thresholds)):
-            conflist.append(confs[i*len(thresholds) + k])
-            acclist.append(accs[i*len(thresholds) + k])
-        #ax.scatter(conflist, acclist, c=approaches[i][2], edgecolors='none', s=30,
+            conflist.append(confs[i * len(thresholds) + k])
+            acclist.append(accs[i * len(thresholds) + k])
+        # ax.scatter(conflist, acclist, c=approaches[i][2], edgecolors='none', s=30,
         #           label=approaches[i][0], marker=approaches[i][3])
         ax.plot(conflist, acclist, c=approaches[i][2], linestyle='dashed', markersize=4,
-                   label=approaches[i][0], marker=approaches[i][3], linewidth=0.5)
-
+                label=approaches[i][0], marker=approaches[i][3], linewidth=0.5)
 
     # print scatter plot
     plt.xlabel('Required configuration points')
@@ -328,13 +395,12 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
     plt.xlim((0, 85))
     plt.legend(loc=1)
     plt.show()
-    fig.savefig(res_efficiency_folder+"\\scatter.pdf")
+    fig.savefig(res_efficiency_folder + "\\scatter.pdf")
 
 
 if __name__ == "__main__":
-    #calculate_and_plot_robustness_metrics()
-    #evaluate_measurement_point_selection()
-    #evaluate_total_workflow()
+    calculate_and_plot_robustness_metrics()
+    # evaluate_measurement_point_selection()
     evaluate_efficiency_scatter_plot(25)
     # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
     #               ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
