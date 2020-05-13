@@ -49,11 +49,8 @@ class PerformancePredictior:
     def __init__(self, datafolder):
         """
         Initializing the approach objects, with all required sub-units.
-
-        Keyword arguments:
-        datafolder -- the datafolder is forwarded to the DataProvider in order to locate the measurement files.
+        :param datafolder: The datafolder is forwarded to the DataProvider in order to locate the measurement files.
         """
-
         # the provider of the measurement data
         self.dataprovider = dataprovider.DataProvider(datafolder, robust_metric=PerformancePredictior.ROBUST_METRIC)
         # storing  measurement data
@@ -69,6 +66,7 @@ class PerformancePredictior:
         """
         Main entry point of the performance prediction workflow. Executes the measurment-modelling loop until a
         sufficient accuracy is achieved. Then returns the final model.
+        :return: This instance itself, with self.model being the trained performance model.
         """
         # print("Started model workflow.")
         # print("Conducting initial set of measurements.")
@@ -100,11 +98,9 @@ class PerformancePredictior:
         """
         Returns a prediction for the given feature set. Raises a ValueError if the feature is unknown, and returns the
         original measurement, if the point is already part of the measurement set.
-
-        Keyword arguments:
-        features -- the feature for the prediction
+        :param features: The feature for the prediction.
+        :return: The predicted performance metric.
         """
-
         # Check if feature is valid
         if features not in self.configuration_provider.get_feature_space():
             raise ValueError("The feature combination {0} is not known to this model.".format(features))
@@ -115,7 +111,10 @@ class PerformancePredictior:
         return self.model.predict(self.modelprovider.get_feature_vector(features))
 
     def __get_initial_measurements(self):
-        """Defines and collects the set of initial measurements to conduct"""
+        """
+        Defines and collects the set of initial measurements to conduct.
+        :return: None
+        """
         # Determine number of points to be measured based on the size of the feature set
         feat_len = len(self.configuration_provider.feature_space)
         points = int(feat_len * PerformancePredictior.INITIAL_MEASUREMENT_RATIO)
@@ -126,7 +125,10 @@ class PerformancePredictior:
             self.__add_one_measurement(i)
 
     def __add_one_increment(self):
-        """Increases the current number of measurements by the defined incremental amount (rounded up)"""
+        """
+        Increases the current number of measurements by the defined incremental amount (rounded up).
+        :return: None
+        """
         current = len(self.measurements.get_available_feature_set())
         points = math.ceil(
             len(self.configuration_provider.get_feature_space()) * PerformancePredictior.INCREMENT_MEASUREMENT_RATIO)
@@ -136,9 +138,8 @@ class PerformancePredictior:
     def __add_one_measurement(self, index):
         """
         Selects a new configuration point and adds it to the measurement set.
-
-        Keyword arguments:
-        index -- the number of already measured points.
+        :param index: The number of already measured points.
+        :return: None.
         """
         feats = self.configuration_provider.get_next_measurement_features(index)
         self.measurements.get_one_measurement_point(feats)

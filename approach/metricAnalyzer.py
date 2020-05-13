@@ -11,9 +11,9 @@ def analyze_metrics(dataset, metriclist):
     assigning every measurement metric (i.e., throughput or latency) a dictionary, assigning every robust metric the
     average as well as the variance of all COVs (coefficient of variation) over all measurement points of each
     experiment.
-    :param dataset: An instance of Data.Dataset
-    :param metriclist:
-    :return:
+    :param dataset: An instance of Datasetloader.Dataset.
+    :param metriclist: The lists of metric to analyze.
+    :return: A dictionary assinging the target metric the variations per metric.
     """
     all_vars_tp = {}
     all_vars_lat = {}
@@ -32,9 +32,14 @@ def analyze_metrics(dataset, metriclist):
     return {"throughput": all_vars_tp, "latency": all_vars_lat}
 
 
-# Returns a dictionary with for each given measurement metric, a metric with the lowest average coefficient of variation
-# , together with the respective value is returned.
 def find_optimal_metric(dataset, metriclist):
+    """
+    Returns a dictionary with for each given measurement metric, a metric with the lowest average coefficient of
+    variation, together with the respective value is returned.
+    :param dataset: An instance of Datasetloader.Dataset.
+    :param metriclist: The lists of metric to analyze.
+    :return: A dictionary assigning each target, the metric with lowest average, together with the respective value.
+    """
     results = analyze_metrics(dataset, metriclist)
     mins = {}
     for value in results:
