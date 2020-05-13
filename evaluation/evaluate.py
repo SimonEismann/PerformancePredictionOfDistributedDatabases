@@ -269,10 +269,10 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
                   ('GBDT', GradientBoostingRegressor(), "gray", "*"),
                   ('RandomForest', RandomForestRegressor(), "purple", "+"),
                   ('SVR', linear_model.SGDRegressor(), "pink", "x"),
-                  ('Dummy', DummyRegressor(), "brown", "d")
+                  ('ZeroR', DummyRegressor(), "brown", "d")
                   ]
     # for each model in approaches
-    thresholds = [-0.1, -0.2, -0.3]
+    thresholds = [-0.1, -0.15, -0.2, -0.25, -0.3]
     names = []
     accs = []
     meass = []
@@ -317,8 +317,10 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
         for k in range(len(thresholds)):
             conflist.append(confs[i*len(thresholds) + k])
             acclist.append(accs[i*len(thresholds) + k])
-        ax.scatter(conflist, acclist, alpha=0.8, c=approaches[i][2], edgecolors='none', s=30,
-                   label=approaches[i][0], marker=approaches[i][3])
+        #ax.scatter(conflist, acclist, c=approaches[i][2], edgecolors='none', s=30,
+        #           label=approaches[i][0], marker=approaches[i][3])
+        ax.plot(conflist, acclist, c=approaches[i][2], linestyle='dashed', markersize=4,
+                   label=approaches[i][0], marker=approaches[i][3], linewidth=0.5)
 
 
     # print scatter plot
@@ -335,7 +337,7 @@ if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
     #evaluate_measurement_point_selection()
     #evaluate_total_workflow()
-    evaluate_efficiency_scatter_plot(2)
+    evaluate_efficiency_scatter_plot(25)
     # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
     #               ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
     #               ('GBDT', GradientBoostingRegressor(), "gray", "*"),
