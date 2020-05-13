@@ -1,9 +1,8 @@
 # This file contains implementations and interfaces of data providers
-import Data
 import random
-import pandas as pd
 import numpy as np
 from approach import util
+from data import Datasetloader
 
 
 # Class responsible of holding and delivering individual measurements upon request
@@ -11,13 +10,13 @@ class DataProvider:
 
     # Constructor takes the base folder (basefolder) to use to detect all available metrics, and the metric to use
     # (robust_metric) to aggregate the individual measurement intervals for each experiment run. Default: Mean
-    def __init__(self, basefolder, robust_metric):
-        Data.basefolder = basefolder
-        self.ds = Data.load_data_set().calculate_robust_metric(robust_metric)
+    def __init__(self, basefolder, robust_metric, export=False):
+        self.ds = Datasetloader.load_data_set(basefolder).calculate_robust_metric(robust_metric)
         self.derive_vm_sizes()
-        with open("csvexport.csv", "w+") as file:
-            self.ds["tp"] = self.ds["target/throughput"].apply(np.median)
-            self.ds.to_csv(file)
+        if export:
+            with open("csvexport.csv", "w+") as file:
+                self.ds["tp"] = self.ds["target/throughput"].apply(np.median)
+                self.ds.to_csv(file)
         # shuffle data points
         for index, row in self.ds.iterrows():
             ltps = list(self.ds.loc[index, "target/throughput"])

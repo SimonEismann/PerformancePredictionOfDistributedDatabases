@@ -12,7 +12,7 @@ import numpy as np
 from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
 
-import approach.dataprovider as dp
+import approach.units.dataproviderunit as dataprovider
 from approach.units.measurementunit import MeasurementSet
 from approach.units.modelproviderunit import PerformanceModelProvider
 from approach.units.samplingunit import ConfigurationPointProvider
@@ -55,7 +55,7 @@ class PerformancePredictior:
         """
 
         # the provider of the measurement data
-        self.dataprovider = dp.DataProvider(datafolder, robust_metric=PerformancePredictior.ROBUST_METRIC)
+        self.dataprovider = dataprovider.DataProvider(datafolder, robust_metric=PerformancePredictior.ROBUST_METRIC)
         # storing  measurement data
         self.measurements = MeasurementSet(dataprovider=self.dataprovider, target_metric="target/throughput",
                                            threshold=PerformancePredictior.COV_THRESHOLD,

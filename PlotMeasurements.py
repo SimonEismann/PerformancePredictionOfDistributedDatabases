@@ -1,14 +1,10 @@
 import numpy as np
-import Data as Data
-from sklearn.ensemble import RandomForestRegressor
+from data import Data as Data
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPRegressor
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import linear_model
 import matplotlib.pyplot as plt
-import boltons.statsutils as su
 import seaborn as sns
-import scipy.stats as stats
+
 sns.set_palette(sns.color_palette("hls", 20))
 
 

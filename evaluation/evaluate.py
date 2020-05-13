@@ -7,15 +7,14 @@ import numpy as np
 from scipy import stats
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.neural_network import MLPRegressor
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_absolute_error
 
-import Data
+from data import Data
 from approach import metricanalyzer
 from approach import util
 import approach.approach
-import approach.dataprovider as dp
+import approach.units.dataprovider as dp
 import time
 from pylatexenc.latexencode import unicode_to_latex
 from sklearn.metrics import mean_squared_error

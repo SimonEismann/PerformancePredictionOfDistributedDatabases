@@ -1,13 +1,20 @@
-# This script evaluates the available data and calculates the best metrics in terms of robustness.
+"""
+This module evaluates the available data and calculates the best metrics in terms of robustness.
+This is the offline phase in the respective paper.
+"""
 import numpy as np
 from scipy import stats
 
-
-# Analyzes the performance of the given metrics and applies all of them to the given data set.
-# Returns a dictionary, assigning every measurement metric (i.e., throughput or latency) a dictionary, assigning every
-# robust metric the average as well as the variance of all COVs (coefficient of variation) over all measurement points
-# of each experiment.
 def analyze_metrics(dataset, metriclist):
+    """
+    Analyzes the performance of the given metrics and applies all of them to the given data set.Returns a dictionary,
+    assigning every measurement metric (i.e., throughput or latency) a dictionary, assigning every robust metric the
+    average as well as the variance of all COVs (coefficient of variation) over all measurement points of each
+    experiment.
+    :param dataset: An instance of Data.Dataset
+    :param metriclist:
+    :return:
+    """
     all_vars_tp = {}
     all_vars_lat = {}
     # iterate through all metrics to be analyzed
@@ -31,7 +38,7 @@ def find_optimal_metric(dataset, metriclist):
     results = analyze_metrics(dataset, metriclist)
     mins = {}
     for value in results:
-        currmin = 2 # COV should be always smaller than 1
+        currmin = 2  # COV should be always smaller than 1
         currmin_metric = "NO_METRIC_FOUND"
         metrics = [i for i in results[value]]
         for m in metrics:
