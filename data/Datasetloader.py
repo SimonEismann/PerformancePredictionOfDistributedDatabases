@@ -181,7 +181,7 @@ def load_data_set(basefolder):
     """
     exps = []
     for config in os.listdir(basefolder):
-        if is_valid_exp(config):
+        if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config, basefolder)
                 if len(exp.throughput_values) != 0:
@@ -198,7 +198,7 @@ def load_tiny_vm_data_set(basefolder):
     """
     exps = []
     for config in os.listdir(basefolder):
-        if is_valid_exp(config):
+        if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 1:
@@ -216,7 +216,7 @@ def load_small_vm_data_set(basefolder):
     """
     exps = []
     for config in os.listdir(basefolder):
-        if is_valid_exp(config):
+        if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 2:
@@ -234,7 +234,7 @@ def load_large_vm_data_set(basefolder):
     """
     exps = []
     for config in os.listdir(basefolder):
-        if is_valid_exp(config):
+        if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 6:
@@ -252,7 +252,7 @@ def load_tiny_small_vm_data_set(basefolder):
     """
     exps = []
     for config in os.listdir(basefolder):
-        if is_valid_exp(config):
+        if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 1 or exp.features['feature/cores'] == 2:
