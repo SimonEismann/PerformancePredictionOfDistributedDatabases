@@ -1,5 +1,6 @@
 # Main script for evaluation purposes
 import math
+import time
 
 import boltons.statsutils as su
 import matplotlib.pyplot as plt
@@ -9,15 +10,14 @@ from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_absolute_error
+from pylatexenc.latexencode import unicode_to_latex
+from sklearn.metrics import mean_squared_error
 
-from data import Data
+from data import Datasetloader
 from approach import metricanalyzer
 from approach import util
 import approach.approach
-import approach.units.dataprovider as dp
-import time
-from pylatexenc.latexencode import unicode_to_latex
-from sklearn.metrics import mean_squared_error
+import approach.units.dataproviderunit as dp
 
 # Configurable base folder for the experiments
 my_basefolder = "..\\mowgli-ml-data\\results\\scalability-ycsb-write\\openstack\\cassandra"
