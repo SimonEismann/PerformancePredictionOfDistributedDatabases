@@ -210,17 +210,6 @@ def compare_baseline_methods(results, values):
     results["10-point"].append(np.median(values[0:11]))
 
 
-def mean_absolute_percentage_error(y_true, y_pred):
-    """
-    Calculates the mean absolute percentage error (MAPE).
-    :param y_true: The real values to compare with.
-    :param y_pred: The predicted values to compare.
-    :return: The calculated error.
-    """
-    y_true, y_pred = np.array(y_true).reshape(1, -1), np.array(y_pred).reshape(1, -1)
-    return np.mean(np.abs((y_true - y_pred)) / y_true) * 100
-
-
 def evaluate_total_workflow():
     """
     Execute and evaluate on model training workflow.

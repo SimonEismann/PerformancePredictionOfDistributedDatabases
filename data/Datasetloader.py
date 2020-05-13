@@ -8,6 +8,8 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 
+import approach.util
+
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
@@ -110,45 +112,14 @@ class Experiment:
         """
         list_of_features = folder_name.split("_")
         vm_size = list_of_features[0][3:]
-        cores, memory = self.extract_vm_specs(vm_size)
+        res = approach.util.get_core_and_memory(vm_size)
+        cores, memory = res[0], res[1]
         cluster_size = list_of_features[1].split("-")[1]
-        client_consistency = self.format_client_consistency(list_of_features[3].split("-")[1])
+        client_consistency = approach.util.format_client_consistency(list_of_features[3].split("-")[1])
         replication_factor = list_of_features[2].split("-")[1]
         feats = {'feature/clustersize': cluster_size, 'feature/replicationfactor': replication_factor,
                  'feature/clientconsistency': client_consistency, 'feature/cores': cores, 'feature/memory': memory}
         return feats
-
-    def extract_vm_specs(self, vm_size):
-        """
-        Extracts a tuple of core and memory configuration based on the VM size as string representation.
-        :param vm_size: A string representation of the VM size.
-        :return: The number of cores, and the amount of memory, separated by a comma.
-        """
-        if vm_size == "tiny":
-            return 1, 2
-        if vm_size == "small":
-            return 2, 4
-        if vm_size == "medium":
-            return 4, 8
-        if vm_size == "large-memory":
-            return 4, 12
-        if vm_size == "large-cpu":
-            return 6, 8
-        raise ValueError("Unknown VM size: " + vm_size)
-
-    def format_client_consistency(self, client_consistency):
-        """
-        Extracts the client consistency as an integer based on its string representation.
-        :param client_consistency: A string representation of the client consistency.
-        :return: The client consistency as an integer.
-        """
-        if client_consistency == "one":
-            return 1
-        if client_consistency == "two":
-            return 2
-        if client_consistency == "three":
-            return 3
-        raise ValueError("Unknown client consistency: " + client_consistency)
 
 
 def is_valid_exp(configuration, basefolder):
