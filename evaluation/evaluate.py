@@ -51,8 +51,7 @@ def calculate_and_plot_robustness_metrics():
                ('Trimean', lambda x: su.Stats(x).trimean),
                ('Hodges-Lehmann', util.calculate_hodges_lehmann)
                ]
-    Data.basefolder = my_basefolder
-    ds = Data.load_data_set()
+    ds = Datasetloader.load_data_set(my_basefolder)
     performance = metricanalyzer.analyze_metrics(ds, metrics)
     for measurement in performance:
         plot_robustness_barchart(measurement, res_robust_folder, performance[measurement])
