@@ -163,14 +163,14 @@ def evaluate_measurement_point_selection():
                 max_diff = diff
                 max_difffeat = feats
         rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines["approach"]))
-        mape = mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
+        mape = util.mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
         no_ms = predictor.get_total_number_of_measurements()
         print("Achieved a MAPE of " + str(mape) + " using a total of " + str(no_ms) + " measurement points.")
         print("Achieved a RMSE of " + str(rmse) + " using a total of " + str(no_ms) + " measurement points.")
         print("The maximal deviation happened at " + str(max_difffeat) + " with a diference of " + str(max_diff) + ". ")
         for key in resultsmape:
             rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines[key]))
-            mape = mean_absolute_percentage_error(baselines["gold"], baselines[key])
+            mape = util.mean_absolute_percentage_error(baselines["gold"], baselines[key])
             resultsrmse[key].append(rmse)
             resultsmape[key].append(mape)
         points["approach"].append(no_ms / len(combinations))
@@ -242,7 +242,7 @@ def get_model_accuracy(predictor):
             # print("Features:", validation)
             # print("Prediction, Label, Error:", predictor.get_prediction(validation), gold, predictor.get_prediction(validation)/gold)
     rmse = math.sqrt(mean_squared_error(reals, preds))
-    mape = mean_absolute_percentage_error(reals, preds)
+    mape = util.mean_absolute_percentage_error(reals, preds)
     mae = mean_absolute_error(reals, preds)
     return mape
 
@@ -388,7 +388,7 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
 
 
 if __name__ == "__main__":
-    calculate_and_plot_robustness_metrics()
+    #calculate_and_plot_robustness_metrics()
     # evaluate_measurement_point_selection()
     evaluate_efficiency_scatter_plot(25)
     # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
