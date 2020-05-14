@@ -2,124 +2,15 @@
 This module contains the functionality to load a pre-recorded data set by Mowgli.
 """
 import os
-import re
-from io import StringIO
 
-import numpy as np
 import pandas as pd
 
-import approach.util
+import approach.units.dataproviderunit as Provider
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 pd.options.display.width = None
-
-
-class Dataset:
-    """
-    This class represents the total data set, i.e., a collection of Experiment instances.
-    """
-    exps = False
-
-    def __init__(self, exps):
-        """
-         Creates a new instance of this class.
-        :param exps: The list of experiments to collect.
-        """
-        self.exps = exps
-
-    def calculate_robust_metric(self, calculate_robust_metric_function):
-        """
-        Applies the given robust metric function to all contained experiments.
-        :param calculate_robust_metric_function: The function to apply calculating the desired metric.
-        :return: A dataframe with one row per experiment.
-        """
-        data_set = []
-        for exp in self.exps:
-            data_set.append(exp.calculate_robust_metric(calculate_robust_metric_function))
-        df = pd.DataFrame(data_set)
-        df = df.apply(pd.to_numeric, errors='ignore')
-        return df
-
-
-class Experiment:
-    """
-    This class contains one Experiment, i.e., a set of measurement values for a given configuration of parameters.
-    """
-
-    def __init__(self, configuration, basefolder):
-        """
-        Creates a new experiment instance for the given configuration by scanning all files given by basefolder.
-        :param configuration: The parameter configuration to create.
-        :param basefolder: The basefolder to use.
-        """
-        self.configuration = configuration
-        folders = os.listdir(basefolder + "\\" + configuration)
-        if "plots" in folders:
-            folders.remove("plots")
-        if len(folders) > 1:
-            self.features = self.extract_features(configuration)
-            path = basefolder + "\\" + configuration
-            folders = os.listdir(path)
-            folders = [path + "\\" + fol for fol in folders]
-            self.throughput_values = []
-            self.latency_values = []
-            for repPath in folders:
-                if not (repPath.__contains__("plots") | repPath.__contains__("archiv")):
-                    if os.path.isfile(repPath + "\\data\\load.txt"):
-                        with open(repPath + "\\data\\load.txt", encoding='utf8') as f:
-                            text = f.read().strip()
-                            text = re.sub(r'^\[OVERALL\].*\n?', '', text, flags=re.MULTILINE)
-                            text = re.sub(r'^\[INSERT\].*\n?', '', text, flags=re.MULTILINE)
-                            resps = pd.read_csv(StringIO(text), sep=";",
-                                                names=['Time', 'Throughput', 'Latency', 'Garbage'])
-                            metrics = {'throughputdata': np.asarray(resps['Throughput']),
-                                       'latencydata': np.asarray(resps['Latency'])}
-                            if len(metrics['throughputdata']) == 0:
-                                print("[WARN] Empty load.txt file: ", repPath)
-                            else:
-                                self.throughput_values.append(metrics['throughputdata'])
-                            if len(metrics['latencydata']) == 0:
-                                print("[WARN] Empty latency data: ", repPath)
-                            else:
-                                self.latency_values.append(metrics['latencydata'])
-                    else:
-                        print("[WARN] No load.txt file:", repPath)
-        else:
-            raise Exception('Invalid Experiment: ' + configuration)
-
-    def calculate_robust_metric(self, calculate_robust_metric_function):
-        """
-        Applies the robust metric function to all measurements of this experiment.
-        :param calculate_robust_metric_function: The function to apply calculating the desired metric.
-        :return: A dict containing the configuration, the features, the robust throughput, and the robust latency
-        """
-        robust_metrics_tp = []
-        robust_metrics_lat = []
-        for raw_measurements in self.throughput_values:
-            robust_metrics_tp.append(calculate_robust_metric_function(raw_measurements))
-        for raw_measurements in self.latency_values:
-            robust_metrics_lat.append(calculate_robust_metric_function(raw_measurements))
-        return {**{'configuration': self.configuration}, **self.features, **{'target/throughput': robust_metrics_tp},
-                **{'target/latency': robust_metrics_lat}}
-
-    def extract_features(self, folder_name):
-        """
-        Extract the feature representation as a dictionary, based on the folder name given as a string.
-        :param folder_name: The string representation of the configuration
-        :return: A dictionary containing all possible feature values and its value.
-        """
-        list_of_features = folder_name.split("_")
-        vm_size = list_of_features[0][3:]
-        res = approach.util.get_core_and_memory(vm_size)
-        cores, memory = res[0], res[1]
-        cluster_size = list_of_features[1].split("-")[1]
-        client_consistency = approach.util.format_client_consistency(list_of_features[3].split("-")[1])
-        replication_factor = list_of_features[2].split("-")[1]
-        feats = {'feature/clustersize': cluster_size, 'feature/replicationfactor': replication_factor,
-                 'feature/clientconsistency': client_consistency, 'feature/cores': cores, 'feature/memory': memory}
-        return feats
 
 
 def is_valid_exp(configuration, basefolder):
@@ -154,10 +45,10 @@ def load_data_set(basefolder):
     for config in os.listdir(basefolder):
         if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
-                exp = Experiment(config, basefolder)
+                exp = Provider.Experiment(config, basefolder)
                 if len(exp.throughput_values) != 0:
                     exps.append(exp)
-    return Dataset(exps)
+    return Provider.Dataset(exps)
 
 
 def load_tiny_vm_data_set(basefolder):
@@ -171,11 +62,11 @@ def load_tiny_vm_data_set(basefolder):
     for config in os.listdir(basefolder):
         if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
-                exp = Experiment(config, basefolder)
+                exp = Provider.Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 1:
                     if len(exp.throughput_values) != 0:
                         exps.append(exp)
-    return Dataset(exps)
+    return Provider.Dataset(exps)
 
 
 def load_small_vm_data_set(basefolder):
@@ -189,11 +80,11 @@ def load_small_vm_data_set(basefolder):
     for config in os.listdir(basefolder):
         if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
-                exp = Experiment(config, basefolder)
+                exp = Provider.Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 2:
                     if len(exp.throughput_values) != 0:
                         exps.append(exp)
-    return Dataset(exps)
+    return Provider.Dataset(exps)
 
 
 def load_large_vm_data_set(basefolder):
@@ -207,11 +98,11 @@ def load_large_vm_data_set(basefolder):
     for config in os.listdir(basefolder):
         if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
-                exp = Experiment(config, basefolder)
+                exp = Provider.Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 6:
                     if len(exp.throughput_values) != 0:
                         exps.append(exp)
-    return Dataset(exps)
+    return Provider.Dataset(exps)
 
 
 def load_tiny_small_vm_data_set(basefolder):
@@ -225,8 +116,8 @@ def load_tiny_small_vm_data_set(basefolder):
     for config in os.listdir(basefolder):
         if is_valid_exp(config, basefolder):
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
-                exp = Experiment(config, basefolder)
+                exp = Provider.Experiment(config, basefolder)
                 if exp.features['feature/cores'] == 1 or exp.features['feature/cores'] == 2:
                     if len(exp.throughput_values) != 0:
                         exps.append(exp)
-    return Dataset(exps)
+    return Provider.Dataset(exps)
