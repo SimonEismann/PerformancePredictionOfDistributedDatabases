@@ -1,4 +1,4 @@
-import Data as Data
+from scripts import Data as Data
 import numpy as np
 import matplotlib.pyplot as plt
 
