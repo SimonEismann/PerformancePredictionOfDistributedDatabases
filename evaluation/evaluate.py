@@ -130,7 +130,7 @@ def get_real_prediction_value(dataprovider, features, target="target/throughput"
     return gold_median, full_vector
 
 
-def evaluate_measurement_point_selection():
+def evaluate_measurement_point_selection(repetitions=100):
     """
     Evaluates the different techniques for measurement point selection.
     :return: None
@@ -141,7 +141,7 @@ def evaluate_measurement_point_selection():
                    "10-point": []}
     points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
 
-    for i in range(100):
+    for i in range(repetitions):
         # create all feature instances
         data = dp.DataProvider(my_basefolder, approach.approach.PerformancePredictior.ROBUST_METRIC)
         combinations = util.get_cartesian_feature_product(data.get_all_possible_values())
@@ -390,7 +390,7 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
 if __name__ == "__main__":
     #calculate_and_plot_robustness_metrics()
     # evaluate_measurement_point_selection()
-    evaluate_efficiency_scatter_plot(25)
+    evaluate_efficiency_scatter_plot(3)
     # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
     #               ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
     #               ('GBDT', GradientBoostingRegressor(), "gray", "*"),

@@ -4,6 +4,11 @@ This units contains all functionality related to the machine learning and perfor
 from approach import util
 import numpy as np
 from sklearn.model_selection import cross_val_score
+from sklearn.exceptions import ConvergenceWarning
+
+import warnings
+warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
+warnings.filterwarnings(action='ignore', category=RuntimeWarning)
 
 
 class PerformanceModelProvider:
@@ -103,6 +108,8 @@ class PerformanceModel:
         :param model_to_use: The model type to use as estimator. Should implement the fit(X,y) function.
         :return: Returns the trained model, and the internal score that this model achieved.
         """
+        warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
+        warnings.filterwarnings(action='ignore', category=RuntimeWarning)
         score = cross_val_score(estimator=model_to_use, X=self.features, y=self.labels, cv=3, n_jobs=-1, scoring=util.negative_mape_scorer).mean()
         full_model = model_to_use.fit(X=self.features, y=self.labels)
         return full_model, score
