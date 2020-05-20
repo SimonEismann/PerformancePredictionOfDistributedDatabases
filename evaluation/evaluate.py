@@ -3,6 +3,7 @@ Main script for evaluation.
 """
 import math
 import time
+import os
 
 import boltons.statsutils as su
 import matplotlib.pyplot as plt
@@ -15,7 +16,7 @@ from sklearn.metrics import mean_absolute_error
 from pylatexenc.latexencode import unicode_to_latex
 from sklearn.metrics import mean_squared_error
 
-from data import Datasetloader
+from dataload import Datasetloader
 from approach import metricanalyzer
 from approach import util
 import approach.approach
@@ -30,7 +31,7 @@ res_robust_folder = res_folder + "\\robust-metrics"
 res_efficiency_folder = res_folder + "\\efficiencies"
 
 
-def calculate_and_plot_robustness_metrics():
+def calculate_and_plot_robustness_metrics(print_individual=False, file=None):
     """
     Analyzes the different robustness metrics by calculating them, plotting them, and printing a table with the results.
     :return: None
@@ -55,31 +56,47 @@ def calculate_and_plot_robustness_metrics():
                ]
     ds = Datasetloader.load_data_set(my_basefolder)
     performance = metricanalyzer.analyze_metrics(ds, metrics)
-    for measurement in performance:
-        plot_robustness_barchart(measurement, res_robust_folder, performance[measurement])
-        # print out performance tables
-        print("LATEX: " + measurement + ":")
-        print("------------------------")
-        print("Metric& \tAvg& \tStd\\\\\\hline")
-        for key, value in performance[measurement].items():
-            print(unicode_to_latex(str(key)) + " & \t{0:.3f} & \t{1:.3f} \\\\".format(value[0], value[1]))
-        print("------------------------")
+    if print_individual:
+        for measurement in performance:
+            plot_robustness_barchart(measurement, res_robust_folder, performance[measurement])
+            # print out performance tables
+            print("LATEX: " + measurement + ":")
+            print("------------------------")
+            print("Metric& \tAvg& \tStd\\\\\\hline")
+            for key, value in performance[measurement].items():
+                print(unicode_to_latex(str(key)) + " & \t{0:.3f} & \t{1:.3f} \\\\".format(value[0], value[1]))
+    if file is not None:
+        with open(file, "w+") as f:
+            strbuffer = "Metric,"
+            any = None
+            for measurement in performance:
+                strbuffer = strbuffer + ("{0}: Avg, {0}: Std,").format(measurement)
+                any = measurement
+            f.write(strbuffer+"\n")
+            for key, value in performance[any].items():
+                # for each metric
+                strbuffer = str(key)
+                for measurement in performance:
+                    strbuffer = strbuffer + (", {0:.3f}, {1:.3f}").format(performance[measurement][key][0],
+                                                                 performance[measurement][key][1])
+                f.write(strbuffer + "\n")
+    print("------------------------")
     print("LATEX: COMBINED")
     print("------------------------")
-    tmp = "Metric\t&"
+    strbuffer = "Metric\t&"
     any = None
     for measurement in performance:
-        tmp = tmp + ("{0}: Avg,\t&{0}: Std,\t&").format(measurement)
+        strbuffer = strbuffer + ("{0}: Avg,\t&{0}: Std,\t&").format(measurement)
         any = measurement
-    tmp = tmp[:-1] + "\\\\\\hline"
-    print(tmp)
+    strbuffer = strbuffer[:-1] + "\\\\\\hline"
+    print(strbuffer)
     for key, value in performance[any].items():
         # for each metric
-        tmp = unicode_to_latex(str(key))
+        strbuffer = unicode_to_latex(str(key))
         for measurement in performance:
-            tmp = tmp + ("\t&{0:.3f}\t& {1:.3f}").format(performance[measurement][key][0],
+            strbuffer = strbuffer + ("\t&{0:.3f}\t& {1:.3f}").format(performance[measurement][key][0],
                                                          performance[measurement][key][1])
-        print(tmp + "\\\\")
+        print(strbuffer + "\\\\")
 
     print("------------------------")
 
@@ -130,7 +147,7 @@ def get_real_prediction_value(dataprovider, features, target="target/throughput"
     return gold_median, full_vector
 
 
-def evaluate_measurement_point_selection(repetitions=100):
+def evaluate_measurement_point_selection(repetitions=100, file=None):
     """
     Evaluates the different techniques for measurement point selection.
     :return: None
@@ -180,6 +197,14 @@ def evaluate_measurement_point_selection(repetitions=100):
         points["3-point"].append(3)
         points["5-point"].append(5)
         points["10-point"].append(10)
+    if file is not None:
+        with open(file, "w+") as f:
+            f.write("Approach , MAPE , RMSE , # points\n")
+            for key in resultsmape:
+                f.write(("{0} , {1:.2f} , {2:.1f} , {3:.2f}\n").format(str(key),
+                                                                             np.mean(resultsmape[key]),
+                                                                             np.mean(resultsrmse[key]),
+                                                                             np.mean(points[key])))
     print("------------------------------------")
     print("Final Results.")
     for key in resultsmape:
@@ -308,7 +333,7 @@ def evaluate_accuracy_curves(approaches, repetitions=50):
     fig.savefig(res_efficiency_folder + r"\performance.pdf")
 
 
-def evaluate_efficiency_scatter_plot(repetitions=50):
+def evaluate_efficiency(repetitions=50, file=None, figure=None):
     """
     Creates a table and a scatter plot (connected with dashed lines) of the efficiencies of all available approaches.
     :param repetitions: The number of repetitions. Default: 50
@@ -331,27 +356,26 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
     meass = []
     confs = []
     times = []
-    with open(res_efficiency_folder + "\\efficiencies.csv", "w+") as file:
-        file.write("Approach, Avg. MAPE, Avg. Measurements, Avg. Configurations, Avg. Time (s)\n")
-        for model in approaches:
-            for t in thresholds:
-                approach.approach.PerformancePredictior.ACC_THRESHOLD = t
-                # actural execution
-                acc, meas, conf, time = get_approach_efficiency(model[1], repetitions=repetitions)
-                # file export
-                file.write("{0}, {1}, {2}, {3}, {4}\n".format(model[0], acc, meas, conf, time))
-                file.flush()
 
-                print(
-                    "Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0] + str(t))), acc, meas, conf,
-                                                              time))
+    print("Approach, Avg. MAPE, Avg. Measurements, Avg. Configurations, Avg. Time (s)\n")
+    for model in approaches:
+        for t in thresholds:
+            approach.approach.PerformancePredictior.ACC_THRESHOLD = t
+            # actural execution
+            acc, meas, conf, time = get_approach_efficiency(model[1], repetitions=repetitions)
+            # file export
+            print("{0}, {1}, {2}, {3}, {4}\n".format(model[0], acc, meas, conf, time))
 
-                # storing for figure
-                names.append(model[0] + str(t))
-                accs.append(np.mean(acc))
-                meass.append(np.mean(meas))
-                confs.append(np.mean(conf))
-                times.append(np.mean(time))
+            print(
+                "Approach {0}: {1}, {2}, {3}, {4}".format(unicode_to_latex(str(model[0] + str(t))), acc, meas, conf,
+                                                          time))
+
+            # storing for figure
+            names.append(model[0] + str(t))
+            accs.append(np.mean(acc))
+            meass.append(np.mean(meas))
+            confs.append(np.mean(conf))
+            times.append(np.mean(time))
 
     print("-------------------")
     print("LATEX")
@@ -362,38 +386,47 @@ def evaluate_efficiency_scatter_plot(repetitions=50):
         print("{0}\t& {1:.2f}\t& {2:.2f}\t& {3:.2f}\t& {4:.2f}\\\\".format(unicode_to_latex(str(names[i])), accs[i],
                                                                            meass[i], confs[i], times[i]))
 
+    if file is not None:
+        with open(file, "w+") as f:
+            f.write(
+                "Approach , Avg. MAPE , Avg. Measurements (Max. 900) , Avg. Configrations (Max. 90) ,Avg. Time (s)\n")
+            for i in range(0, len(names)):
+                # latex export
+                f.write("{0}, {1:.2f}, {2:.2f}, {3:.2f}, {4:.2f}\n".format(unicode_to_latex(str(names[i])),
+                                                                                   accs[i],
+                                                                                   meass[i], confs[i], times[i]))
+
     # Create plot
-    fig = plt.figure(figsize=(6, 4))
-    ax = fig.add_subplot(1, 1, 1)
+    if figure is not None:
+        fig = plt.figure(figsize=(6, 4))
+        ax = fig.add_subplot(1, 1, 1)
 
-    for i in range(len(approaches)):
-        conflist = []
-        acclist = []
-        for k in range(len(thresholds)):
-            conflist.append(confs[i * len(thresholds) + k])
-            acclist.append(accs[i * len(thresholds) + k])
-        # ax.scatter(conflist, acclist, c=approaches[i][2], edgecolors='none', s=30,
-        #           label=approaches[i][0], marker=approaches[i][3])
-        ax.plot(conflist, acclist, c=approaches[i][2], linestyle='dashed', markersize=4,
-                label=approaches[i][0], marker=approaches[i][3], linewidth=0.5)
+        for i in range(len(approaches)):
+            conflist = []
+            acclist = []
+            for k in range(len(thresholds)):
+                conflist.append(confs[i * len(thresholds) + k])
+                acclist.append(accs[i * len(thresholds) + k])
+            # ax.scatter(conflist, acclist, c=approaches[i][2], edgecolors='none', s=30,
+            #           label=approaches[i][0], marker=approaches[i][3])
+            ax.plot(conflist, acclist, c=approaches[i][2], linestyle='dashed', markersize=4,
+                    label=approaches[i][0], marker=approaches[i][3], linewidth=0.5)
 
-    # print scatter plot
-    plt.xlabel('Required configuration points')
-    plt.ylabel('Prediction error (MAPE)')
-    plt.ylim((0, 50))
-    plt.xlim((0, 85))
-    plt.legend(loc=1)
-    plt.show()
-    fig.savefig(res_efficiency_folder + "\\scatter.pdf")
+        # print scatter plot
+        plt.xlabel('Required configuration points')
+        plt.ylabel('Prediction error (MAPE)')
+        plt.ylim((0, 50))
+        plt.xlim((0, 85))
+        plt.legend(loc=1)
+        fig.savefig(figure)
 
 
 if __name__ == "__main__":
-    #calculate_and_plot_robustness_metrics()
-    # evaluate_measurement_point_selection()
-    evaluate_efficiency_scatter_plot(3)
-    # approaches = [('LinReg', linear_model.LinearRegression(), "red", "o"),
-    #               ('HuberRegressor', linear_model.HuberRegressor(), "black", ">"),
-    #               ('GBDT', GradientBoostingRegressor(), "gray", "*"),
-    #               ('Dummy', DummyRegressor(), "brown", "d")
-    #               ]
-    # evaluate_accuracy_curves(approaches, 5)
+    # Create output folders
+
+    # Experiment 1:
+    calculate_and_plot_robustness_metrics(False, file=res_folder+"\\TableIII.csv")
+    # Experiment 2:
+    evaluate_measurement_point_selection(10, file=res_folder+"\\TableIV.csv")
+    # Experiment 3:
+    evaluate_efficiency(3, file=res_folder+"\\TableV.csv", figure=res_folder+"\\Figure3.pdf")

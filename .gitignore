@@ -8,3 +8,6 @@ Pipfile.lock
 /results/timeseries/
 /results/efficiencies/
 /csvexport.csv
+/results/Figure3.pdf
+/results/TableIII.csv
+/results/TableIV.csv

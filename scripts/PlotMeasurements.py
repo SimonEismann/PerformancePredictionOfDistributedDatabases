@@ -1,5 +1,5 @@
 import numpy as np
-from data import Data as Data
+from dataload import Data as Data
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model
 import matplotlib.pyplot as plt
