@@ -5,7 +5,7 @@ import numpy as np
 import itertools
 
 # Map assigning VM sizes with core and memory allocations
-vmsize_map = {"tiny": [1, 2], "small": [2, 4], "medium": [4, 8], "large-memory": [4, 12], "large-cpu": [6, 8]}
+vmsize_map = {"tiny": [1, 2], "small": [2, 4], "medium": [4, 8], "large-memory": [4, 12], "large-cpu": [6, 8], "large": [6, 10]}
 
 
 def calculate_hodges_lehmann(l_input):
@@ -84,7 +84,7 @@ def get_vm_size(cores, memory):
     sizes = [cores, memory]
     for size in vmsize_map:
         if vmsize_map[size] == sizes:
-            vmsize=size
+            vmsize = size
     if not vmsize:
         raise ValueError("The VM size associated with sizes of "+str(sizes)+" could not be mapped...")
     return vmsize
@@ -107,11 +107,13 @@ def format_client_consistency(client_consistency):
     :param client_consistency: A string representation of the client consistency.
     :return: The client consistency as an integer.
     """
-    if client_consistency == "one":
+    if client_consistency == "any" or client_consistency == "ANY":
+        return 0
+    if client_consistency == "one" or client_consistency == "ONE":
         return 1
-    if client_consistency == "two":
+    if client_consistency == "two" or client_consistency == "TWO":
         return 2
-    if client_consistency == "three":
+    if client_consistency == "three" or client_consistency == "THREE":
         return 3
     raise ValueError("Unknown client consistency: " + client_consistency)
 

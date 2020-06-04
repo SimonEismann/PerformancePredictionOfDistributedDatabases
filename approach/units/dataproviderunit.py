@@ -110,6 +110,7 @@ class Dataset:
         :param exps: The list of experiments to collect.
         """
         self.exps = exps
+        print("We have {0} experiments in our data set.".format(len(exps)))
 
     def calculate_robust_metric(self, calculate_robust_metric_function):
         """
@@ -141,7 +142,7 @@ class Experiment:
         if "plots" in folders:
             folders.remove("plots")
         if len(folders) > 1:
-            self.features = self.extract_features(configuration)
+            self.features = extract_features(configuration)
             path = basefolder + "\\" + configuration
             folders = os.listdir(path)
             folders = [path + "\\" + fol for fol in folders]
@@ -150,26 +151,34 @@ class Experiment:
             for repPath in folders:
                 if not (repPath.__contains__("plots") | repPath.__contains__("archiv")):
                     if os.path.isfile(repPath + "\\data\\load.txt"):
-                        with open(repPath + "\\data\\load.txt", encoding='utf8') as f:
-                            text = f.read().strip()
-                            text = re.sub(r'^\[OVERALL\].*\n?', '', text, flags=re.MULTILINE)
-                            text = re.sub(r'^\[INSERT\].*\n?', '', text, flags=re.MULTILINE)
-                            resps = pd.read_csv(StringIO(text), sep=";",
-                                                names=['Time', 'Throughput', 'Latency', 'Garbage'])
-                            metrics = {'throughputdata': np.asarray(resps['Throughput']),
-                                       'latencydata': np.asarray(resps['Latency'])}
-                            if len(metrics['throughputdata']) == 0:
-                                print("[WARN] Empty load.txt file: ", repPath)
-                            else:
-                                self.throughput_values.append(metrics['throughputdata'])
-                            if len(metrics['latencydata']) == 0:
-                                print("[WARN] Empty latency data: ", repPath)
-                            else:
-                                self.latency_values.append(metrics['latencydata'])
+                        self.__parse_load_txt(repPath)
                     else:
                         print("[WARN] No load.txt file:", repPath)
         else:
             raise Exception('Invalid Experiment: ' + configuration)
+
+    def __parse_load_txt(self, repPath):
+        """
+        Parses the given load.txt file, and appends it to the throughput and latency data.
+        :param repPath: The path, where the data\load.txt is searched
+        :return: None
+        """
+        with open(repPath + "\\data\\load.txt", encoding='utf8') as f:
+            text = f.read().strip()
+            text = re.sub(r'^\[OVERALL\].*\n?', '', text, flags=re.MULTILINE)
+            text = re.sub(r'^\[INSERT\].*\n?', '', text, flags=re.MULTILINE)
+            resps = pd.read_csv(StringIO(text), sep=";",
+                                names=['Time', 'Throughput', 'Latency', 'Garbage'])
+            metrics = {'throughputdata': np.asarray(resps['Throughput']),
+                       'latencydata': np.asarray(resps['Latency'])}
+            if len(metrics['throughputdata']) == 0:
+                print("[WARN] Empty load.txt file: ", repPath)
+            else:
+                self.throughput_values.append(metrics['throughputdata'])
+            if len(metrics['latencydata']) == 0:
+                print("[WARN] Empty latency data: ", repPath)
+            else:
+                self.latency_values.append(metrics['latencydata'])
 
     def calculate_robust_metric(self, calculate_robust_metric_function):
         """
@@ -186,12 +195,49 @@ class Experiment:
         return {**{'configuration': self.configuration}, **self.features, **{'target/throughput': robust_metrics_tp},
                 **{'target/latency': robust_metrics_lat}}
 
-    def extract_features(self, folder_name):
-        """
-        Extract the feature representation as a dictionary, based on the folder name given as a string.
-        :param folder_name: The string representation of the configuration
-        :return: A dictionary containing all possible feature values and its value.
-        """
+
+def extract_features(folder_name):
+    """
+    Extract the feature representation as a dictionary, based on the folder name given as a string.
+    :param folder_name: The string representation of the configuration
+    :return: A dictionary containing all possible feature values and its value.
+    """
+    if folder_name.startswith("node"):
+        return extract_features_legacy(folder_name)
+    else:
+        return extract_features_modern(folder_name)
+
+
+def extract_features_legacy(folder_name):
+    """
+    Extract the feature representation as a dictionary, based on the folder name given as a string.
+    Tries to use the "classic" or legacy naming scheme. Raises an value error, if conversion fails.
+    :param folder_name: The string representation of the configuration
+    :return: A dictionary containing all possible feature values and its value.
+    """
+    try:
+        list_of_features = folder_name.split("_")
+        vm_size = list_of_features[3]
+        res = util.get_core_and_memory(vm_size)
+        cores, memory = res[0], res[1]
+        cluster_size = list_of_features[0].split("-")[1]
+        client_consistency = util.format_client_consistency(list_of_features[2].split("-")[1])
+        replication_factor = list_of_features[1].split("-")[1]
+        feats = {'feature/clustersize': cluster_size, 'feature/replicationfactor': replication_factor,
+                 'feature/clientconsistency': client_consistency, 'feature/cores': cores, 'feature/memory': memory}
+        return feats
+    except:
+        raise ValueError("The folder name did not fit to the naming convention: 'legacy'")
+
+
+def extract_features_modern(folder_name):
+    """
+    Extract the feature representation as a dictionary, based on the folder name given as a string.
+    Tries to use the new or modern naming scheme. Raises an value error, if conversion fails.
+    :param folder_name: The string representation of the configuration
+    :return: A dictionary containing all possible feature values and its value.
+    """
+    try:
         list_of_features = folder_name.split("_")
         vm_size = list_of_features[0][3:]
         res = util.get_core_and_memory(vm_size)
@@ -202,3 +248,6 @@ class Experiment:
         feats = {'feature/clustersize': cluster_size, 'feature/replicationfactor': replication_factor,
                  'feature/clientconsistency': client_consistency, 'feature/cores': cores, 'feature/memory': memory}
         return feats
+    except:
+        raise ValueError("The folder name did not fit to the naming convention: 'modern'")
+

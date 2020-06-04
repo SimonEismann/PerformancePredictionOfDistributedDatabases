@@ -44,10 +44,14 @@ def load_data_set(basefolder):
     exps = []
     for config in os.listdir(basefolder):
         if is_valid_exp(config, basefolder):
+            # these need to be excluded as they are the only ones in their size that have more than 1 config (and therefore are not filtered by "is_valid_exp"
             if config != "vm-large-memory_cs-7_rf-3_cc-two" and config != "vm-medium_cs-3_rf-3_cc-one":
                 exp = Provider.Experiment(config, basefolder)
                 if len(exp.throughput_values) != 0:
                     exps.append(exp)
+        else:
+            #print("Ignoring this folder: ", config)
+            pass
     return Provider.Dataset(exps)
 
 

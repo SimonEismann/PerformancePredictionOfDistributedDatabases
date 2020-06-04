@@ -3,7 +3,7 @@ Main script for evaluation.
 """
 import math
 import time
-import os
+import random
 
 import boltons.statsutils as su
 import matplotlib.pyplot as plt
@@ -31,7 +31,60 @@ res_robust_folder = res_folder + "\\robust-metrics"
 res_efficiency_folder = res_folder + "\\efficiencies"
 
 
-def calculate_and_plot_robustness_metrics(print_individual=False, file=None):
+def calculate_and_compare_robustness_metrics(compare_folder):
+    """
+    Compares the given metrics for two different data sets. The basefolder is always compared with the given one
+    :param compare_folder: The folder containing the second data set to compare against.
+    :return: None.
+    """
+    # List of metrics to be analyzed
+    metrics = [('Mean', np.mean),
+               ('Median', np.median),
+               ('95th percentile', lambda x: np.percentile(x, 95)),
+               ('90th percentile', lambda x: np.percentile(x, 90)),
+               ('80th percentile', lambda x: np.percentile(x, 80)),
+               ('70th percentile', lambda x: np.percentile(x, 70)),
+               ('Trimmed(5%) mean', lambda x: stats.trim_mean(x, 0.05)),
+               ('Trimmed(10%) mean', lambda x: stats.trim_mean(x, 0.1)),
+               ('Trimmed(20%) mean', lambda x: stats.trim_mean(x, 0.2)),
+               ('Trimmed(30%) mean', lambda x: stats.trim_mean(x, 0.3)),
+               ('Winsorized(5%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.05, 0.05]))),
+               ('Winsorized(10%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.1, 0.1]))),
+               ('Winsorized(20%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.2, 0.2]))),
+               ('Winsorized(30%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.3, 0.3]))),
+               ('Trimean', lambda x: su.Stats(x).trimean),
+               ('Hodges-Lehmann', util.calculate_hodges_lehmann)
+               ]
+    ds = Datasetloader.load_data_set(compare_folder)
+    performance = metricanalyzer.analyze_metrics(ds, metrics)
+
+    d2 = Datasetloader.load_data_set(my_basefolder)
+    p2 = metricanalyzer.analyze_metrics(d2, metrics)
+
+    print("------------------------")
+    print("LATEX: COMPARE")
+    print("------------------------")
+    strbuffer = "Metric\t&"
+    any = None
+    for measurement in performance:
+        strbuffer = strbuffer + ("{0}: DS1,\t&{0}: DS2,\t&").format(measurement)
+        any = measurement
+    strbuffer = strbuffer[:-1] + "\\\\\\hline"
+    print(strbuffer)
+    for key, value in performance[any].items():
+        # for each metric
+        strbuffer = unicode_to_latex(str(key))
+        for measurement in performance:
+            strbuffer = strbuffer + ("\t&{0:.3f}").format(performance[measurement][key][0])
+            strbuffer = strbuffer + ("\t&{0:.3f}").format(p2[measurement][key][0])
+        print(strbuffer + "\\\\")
+
+    print("------------------------")
+
+
+
+
+def calculate_and_plot_robustness_metrics(print_individual=False, file=None, delete=0):
     """
     Analyzes the different robustness metrics by calculating them, plotting them, and printing a table with the results.
     :return: None
@@ -47,14 +100,18 @@ def calculate_and_plot_robustness_metrics(print_individual=False, file=None):
                ('Trimmed(10%) mean', lambda x: stats.trim_mean(x, 0.1)),
                ('Trimmed(20%) mean', lambda x: stats.trim_mean(x, 0.2)),
                ('Trimmed(30%) mean', lambda x: stats.trim_mean(x, 0.3)),
-               ('Winzorized(5%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.05, 0.05]))),
-               ('Winzorized(10%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.1, 0.1]))),
-               ('Winzorized(20%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.2, 0.2]))),
-               ('Winzorized(30%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.3, 0.3]))),
+               ('Winsorized(5%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.05, 0.05]))),
+               ('Winsorized(10%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.1, 0.1]))),
+               ('Winsorized(20%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.2, 0.2]))),
+               ('Winsorized(30%) mean', lambda x: np.mean(stats.mstats.winsorize(x, [0.3, 0.3]))),
                ('Trimean', lambda x: su.Stats(x).trimean),
                ('Hodges-Lehmann', util.calculate_hodges_lehmann)
                ]
     ds = Datasetloader.load_data_set(my_basefolder)
+    # delete random samples from ds
+    for i in range(delete):
+        random_item_from_list = random.choice(ds.exps)
+        ds.exps.remove(random_item_from_list)
     performance = metricanalyzer.analyze_metrics(ds, metrics)
     if print_individual:
         for measurement in performance:
@@ -157,6 +214,9 @@ def evaluate_measurement_point_selection(repetitions=100, file=None):
     resultsrmse = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [],
                    "10-point": []}
     points = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [], "10-point": []}
+    results_deviations = {"approach": [], "gold": [], "1-point": [], "2-point": [], "3-point": [], "5-point": [],
+                   "10-point": []}
+    accuracy_threshold = 0.01
 
     for i in range(repetitions):
         # create all feature instances
@@ -179,17 +239,23 @@ def evaluate_measurement_point_selection(repetitions=100, file=None):
             if diff > max_diff:
                 max_diff = diff
                 max_difffeat = feats
+
         rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines["approach"]))
         mape = util.mean_absolute_percentage_error(baselines["gold"], baselines["approach"])
+        no_of_deviated_points = get_deviations(baselines["gold"], baselines["approach"], threshold=accuracy_threshold)
         no_ms = predictor.get_total_number_of_measurements()
         print("Achieved a MAPE of " + str(mape) + " using a total of " + str(no_ms) + " measurement points.")
         print("Achieved a RMSE of " + str(rmse) + " using a total of " + str(no_ms) + " measurement points.")
+        print("{0} points of a total of {1} points deviated by more than {2} percent. ".format(no_of_deviated_points, len(combinations), accuracy_threshold*100))
         print("The maximal deviation happened at " + str(max_difffeat) + " with a diference of " + str(max_diff) + ". ")
         for key in resultsmape:
             rmse = math.sqrt(mean_squared_error(baselines["gold"], baselines[key]))
             mape = util.mean_absolute_percentage_error(baselines["gold"], baselines[key])
+            no_deviations = get_deviations(baselines["gold"], baselines[key], threshold=accuracy_threshold)
             resultsrmse[key].append(rmse)
             resultsmape[key].append(mape)
+            results_deviations[key].append(no_deviations)
+
         points["approach"].append(no_ms / len(combinations))
         points["gold"].append(len(full_vector))
         points["1-point"].append(1)
@@ -199,11 +265,12 @@ def evaluate_measurement_point_selection(repetitions=100, file=None):
         points["10-point"].append(10)
     if file is not None:
         with open(file, "w+") as f:
-            f.write("Approach , MAPE , RMSE , # points\n")
+            f.write("Approach , MAPE , RMSE , Deviations , # points\n")
             for key in resultsmape:
-                f.write(("{0} , {1:.2f} , {2:.1f} , {3:.2f}\n").format(str(key),
+                f.write(("{0} , {1:.2f} , {2:.1f} , {3:.1f} {4:.2f}\n").format(str(key),
                                                                              np.mean(resultsmape[key]),
                                                                              np.mean(resultsrmse[key]),
+                                                                             np.mean(results_deviations[key]),
                                                                              np.mean(points[key])))
     print("------------------------------------")
     print("Final Results.")
@@ -214,11 +281,29 @@ def evaluate_measurement_point_selection(repetitions=100, file=None):
             np.mean(points[key])) + " measurement points.")
     print("------------------------------------")
     print("LATEX TABLE.")
-    print("Approach \t& MAPE \t& RMSE \t& # points\\\\")
+    print("Approach \t& MAPE \t& Deviations \t& # points\\\\")
     for key in resultsmape:
         print(("{0} \t& {1:.2f} \t& {2:.1f} \t& {3:.2f}\\\\").format(unicode_to_latex(str(key)),
                                                                      np.mean(resultsmape[key]),
-                                                                     np.mean(resultsrmse[key]), np.mean(points[key])))
+                                                                     np.mean(results_deviations[key]),
+                                                                     np.mean(points[key])))
+
+
+def get_deviations(gold, predictions, threshold):
+    """
+    Calculates the number of feature combinations that deviate more than a given ratio from the given gold vectors.
+    :param gold: List of gold values to compare against.
+    :param predictions: List of predictions to compare against the gold values.
+    :param threshold: Threshold to apply as a relative ratio.
+    :return: Number of points that achieved a higher deviation.
+    """
+    no_of_deviated_points = 0
+    for index, gold in enumerate(gold):
+        pred = predictions[index]
+        diff = abs(gold - pred)
+        if diff / gold > threshold:
+            no_of_deviated_points = no_of_deviated_points + 1
+    return no_of_deviated_points
 
 
 def compare_baseline_methods(results, values):
@@ -423,10 +508,11 @@ def evaluate_efficiency(repetitions=50, file=None, figure=None):
 
 if __name__ == "__main__":
     # Create output folders
-
+    compare_folder = r"C:\Users\Johannes\Desktop\combined"
     # Experiment 1:
-    calculate_and_plot_robustness_metrics(False, file=res_folder+"\\TableIII.csv")
+    #calculate_and_plot_robustness_metrics(False, file=res_folder+"\\TableIII.csv", delete=0)
+    calculate_and_compare_robustness_metrics(compare_folder)
     # Experiment 2:
-    evaluate_measurement_point_selection(10, file=res_folder+"\\TableIV.csv")
+    #evaluate_measurement_point_selection(100, file=res_folder+"\\TableIV.csv")
     # Experiment 3:
-    evaluate_efficiency(3, file=res_folder+"\\TableV.csv", figure=res_folder+"\\Figure3.pdf")
+    #evaluate_efficiency(3, file=res_folder+"\\TableV.csv", figure=res_folder+"\\Figure3.pdf")
