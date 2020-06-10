@@ -31,7 +31,7 @@ res_robust_folder = res_folder + "\\robust-metrics"
 res_efficiency_folder = res_folder + "\\efficiencies"
 
 
-def calculate_and_compare_robustness_metrics(compare_folder):
+def calculate_and_compare_robustness_metrics(compare_folder, file=None):
     """
     Compares the given metrics for two different data sets. The basefolder is always compared with the given one
     :param compare_folder: The folder containing the second data set to compare against.
@@ -80,6 +80,22 @@ def calculate_and_compare_robustness_metrics(compare_folder):
         print(strbuffer + "\\\\")
 
     print("------------------------")
+
+    if file is not None:
+        with open(file, "w+") as f:
+            strbuffer = "Metric,"
+            anything = None
+            for measurement in performance:
+                strbuffer = strbuffer + ("{0}: Data set 1, {0}: Data set 2,").format(measurement)
+                anything = measurement
+            f.write(strbuffer + "\n")
+            for key, value in performance[anything].items():
+                # for each metric
+                strbuffer = str(key)
+                for measurement in performance:
+                    strbuffer = strbuffer + (", {0:.3f}, {1:.3f}").format(performance[measurement][key][0],
+                                                                          p2[measurement][key][0])
+                f.write(strbuffer + "\n")
 
 
 
